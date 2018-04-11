@@ -1,0 +1,16 @@
+/*!
+Theme Name: Hillsong Shuttle Theme
+Theme URI: https://www.hillsong.nl
+Author: Jordy Wichgers
+Author URI: https://www.jeemwee.nl
+Description:  Custom made theme for Hillsong Nethers
+Version: 3.0.11
+License: GNU General Public License v2 or later
+License URI: LICENSE
+Text Domain: hillsong
+Tags: blog, custom-menu, featured-images, threaded-comments, translation-ready, right-sidebar, custom-background, e-commerce, theme-options, sticky-post, full-width-template
+*/
+@import "partials/_variables.scss";
+@import "partials/navbar.scss";
+@import "partials/hero.scss";
+@import "partials/typography.scss";
