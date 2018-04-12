@@ -1,7 +1,7 @@
 <?php
 /*
 Title: General
-Order: 10
+Order: -9999
 Flow: Piklist Core Settings
 Default: true
 */

@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  User
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -54,7 +54,7 @@ class Piklist_User
       add_action('profile_update', array('piklist_user', 'multiple_roles'));
       add_action('user_register', array('piklist_user', 'multiple_roles'), 9);
       add_action('admin_footer', array('piklist_user', 'multiple_roles_field'));
-      
+
       add_filter('additional_capabilities_display', array('piklist_user', 'additional_capabilities_display'));
     }
   }
@@ -76,6 +76,8 @@ class Piklist_User
               ,'order' => 'Order'
               ,'role' => 'Role'
               ,'new' => 'New'
+              ,'id' => 'ID'
+              ,'slug' => 'Slug'
             );
 
     piklist::process_parts('users', $data, array('piklist_user', 'register_meta_boxes_callback'));

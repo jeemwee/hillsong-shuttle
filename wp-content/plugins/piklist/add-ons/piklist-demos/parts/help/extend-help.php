@@ -1,6 +1,6 @@
 <?php
 /*
-Title: Hello
+Title: Hello Help
 Extend: piklist_demos_demos_help
 Extend Method: after
 */

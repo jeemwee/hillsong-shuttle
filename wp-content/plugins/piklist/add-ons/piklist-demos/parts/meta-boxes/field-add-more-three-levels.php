@@ -4,7 +4,7 @@ Title: Add More Fields: Three Levels
 Post Type: piklist_demo
 Order: 1
 Collapse: false
-Tab: Add-More's
+Tab: Add more's
 Sub Tab: Three Levels
 Flow: Demo Workflow
 */
@@ -161,6 +161,8 @@ Flow: Demo Workflow
     )
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

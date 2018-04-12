@@ -7,7 +7,7 @@ Tab: Common
 Sub Tab: Basic
 Flow: Demo Workflow
 */
-  
+
   // NOTE: If the post_status of an attachment is anything but inherit or private it will NOT be
   // shown on the Media page in the admin, but it is in the database and can be found using query_posts
   // or get_posts or get_post etc....  
@@ -41,6 +41,8 @@ Flow: Demo Workflow
     )
   ));
   
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

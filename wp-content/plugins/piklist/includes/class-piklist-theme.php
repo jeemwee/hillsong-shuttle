@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Theme
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -30,7 +30,7 @@ class Piklist_Theme
    */
   public static function _construct()
   {
-    global $pagenow;
+    global $pagenow, $wp_version;
 
     add_action($pagenow == 'customize.php' ? 'customize_controls_init' : 'init', array('piklist_theme', 'register_assets'));
     add_action('setup_theme', array('piklist_theme', 'setup_theme'));
@@ -42,7 +42,7 @@ class Piklist_Theme
     add_action('admin_footer', array('piklist_theme', 'register_assets_footer'), 0);
     add_action('customize_controls_print_footer_scripts', array('piklist_theme', 'register_assets_footer'), 0);
 
-    if (version_compare($GLOBALS['wp_version'], '4.2', '<'))
+    if (version_compare($wp_version, '4.2', '<'))
     {
       add_action('wp_head', array('piklist_theme', 'conditional_scripts_start'), -1);
       add_action('wp_footer', array('piklist_theme', 'conditional_scripts_start'), -1);
@@ -88,7 +88,11 @@ class Piklist_Theme
 
       add_action('load-plugins.php', array('piklist_admin', 'deactivation_link'));
 
-      piklist_admin::$piklist_dependent = true;
+      $current_theme = wp_get_theme();
+      if ( $current_theme->exists() )
+      {
+          piklist_admin::$piklist_dependent['theme'][] = $current_theme->get( 'Name' );	  
+      }
     }
 
     if (get_template_directory() != get_stylesheet_directory() && is_dir(get_template_directory() . '/piklist'))
@@ -97,7 +101,7 @@ class Piklist_Theme
         'path' => get_template_directory() . '/piklist'
         ,'url' => get_template_directory_uri() . '/piklist'
       );
-      
+
       piklist::$paths['parent-theme'] = &piklist::$add_ons['parent-theme']['path'];
     }
   }

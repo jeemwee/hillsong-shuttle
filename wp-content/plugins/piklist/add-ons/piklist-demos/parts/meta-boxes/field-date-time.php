@@ -3,8 +3,8 @@
 Title: DatePicker Fields
 Post Type: piklist_demo
 Order: 50
-Collapse: false
-Tab: Basic
+Tab: Common
+Sub Tab: Basic
 Flow: Demo Workflow
 */
 ?>
@@ -14,7 +14,7 @@ Flow: Demo Workflow
 </p>
 
 <?php
-  
+
   piklist('field', array(
     'type' => 'datepicker'
     ,'field' => 'date'
@@ -31,12 +31,12 @@ Flow: Demo Workflow
       'value' => 'lock'
     )
   ));
-  
+
   piklist('field', array(
     'type' => 'datepicker'
     ,'field' => 'date_add_more'
     ,'add_more' => true
-    ,'label' => __('Add More', 'piklist-demo')
+    ,'label' => __('Date add more', 'piklist-demo')
     ,'description' => __('Choose a date', 'piklist-demo')
     ,'options' => array(
       'dateFormat' => 'M d, yy'
@@ -49,7 +49,9 @@ Flow: Demo Workflow
       'value' => 'lock'
     )
   ));
-    
+
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

@@ -10,10 +10,10 @@ Flow: Demo Workflow
   
   piklist('field', array(
     'type' => 'editor'
-    ,'field' => 'post_content_editor'
+    ,'field' => 'editor'
     ,'required' => true
-    ,'label' => __('Post Content', 'piklist-demo')
-    ,'description' => __('This is a replacement for the post_content editor', 'piklist-demo')
+    ,'label' => __('Editor', 'piklist-demo')
+    ,'description' => __('This is a kitchen sink editor', 'piklist-demo')
     ,'value' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
     ,'options' => array(
       'wpautop' => true
@@ -35,10 +35,10 @@ Flow: Demo Workflow
   
   piklist('field', array(
     'type' => 'editor'
-    ,'field' => 'post_content_add_more'
-    ,'label' => __('Post Content Add More', 'piklist-demo')
+    ,'field' => 'teeny_editor_add_more'
+    ,'label' => __('Editor Add More', 'piklist-demo')
     ,'add_more' => true
-    ,'description' => __('This is the teeny editor used in an add-more repeater field.', 'piklist-demo')
+    ,'description' => __('This is the teeny editor used in an add more repeater field.', 'piklist-demo')
     ,'value' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
     ,'options' => array(
       'media_buttons' => false
@@ -52,6 +52,8 @@ Flow: Demo Workflow
     )
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Settings Section'

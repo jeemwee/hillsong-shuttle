@@ -8,36 +8,42 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Workflow
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
 class Piklist_Workflow
 {
   /**
-   * @var array Stores the active workflow.
+   * @var bool Stores the active workflow.
    * @access private
    */
   private static $workflow = false;
-  
+
+  /**
+   * @var bool Are we rendering a workflow directly.
+   * @access private
+   */
+  private static $rendering = false;
+
   /**
    * @var array Stores all registered workflows.
    * @access private
    */
   private static $workflows = array();
-  
+
   /**
    * @var array Stores all registered workflows that belong to a tab in a workflow.
    * @access private
    */
   private static $sub_workflows = array();
-  
+
   /**
    * @var array A list of hooks where workflows can be inserted.
    * @access private
    */
   private static $after_positions = array();
-  
+
   /**
    * _construct
    * Class constructor.
@@ -48,19 +54,18 @@ class Piklist_Workflow
    */
   public static function _construct()
   {
-    if (is_admin())
-    {
-      add_filter('redirect_post_location', array('piklist_workflow', 'redirect'), 10, 2);
-      add_filter('wp_redirect', array('piklist_workflow', 'redirect'), 10, 2);
-      add_filter('piklist_part_process_callback', array('piklist_workflow', 'part_process_callback'), 100, 2);
-      add_filter('piklist_part_data', array('piklist_workflow', 'part_data'), 10, 2);
-      add_filter('admin_body_class', array('piklist_workflow', 'admin_body_class'));
-      add_filter('piklist_validate_part_parameter_skip', array('piklist_workflow', 'validate_part_parameter_skip'), 10, 3);
-      add_action('admin_init', array('piklist_workflow', 'register_workflows'), 100);
-      add_action('piklist_parts_processed-workflows', array('piklist_workflow', 'detect_workflow'), 100);
-    }
+    add_filter('redirect_post_location', array('piklist_workflow', 'redirect'), 10, 2);
+    add_filter('wp_redirect', array('piklist_workflow', 'redirect'), 10, 2);
+    add_filter('piklist_part_process_callback', array('piklist_workflow', 'part_process_callback'), 100, 2);
+    add_filter('piklist_part_data', array('piklist_workflow', 'part_data'), 10, 2);
+    add_filter('admin_body_class', array('piklist_workflow', 'admin_body_class'));
+    add_filter('piklist_validate_part_parameter_skip', array('piklist_workflow', 'validate_part_parameter_skip'), 10, 3);
+    add_action('init', array('piklist_workflow', 'register_workflows'), 100);
+    add_action('piklist_parts_processed-workflows', array('piklist_workflow', 'detect_workflow'), 100);
+
+    add_shortcode('piklist_workflow', array('piklist_workflow', 'shortcode'));
   }
-  
+
   /**
    * redirect
    * Handle redirects for workflow pages.
@@ -79,11 +84,11 @@ class Piklist_Workflow
     if (isset($_REQUEST['_wp_http_referer']))
     {
       $url = parse_url($_REQUEST['_wp_http_referer']);
-    
+
       if (isset($url['query']))
       {
         parse_str($url['query'], $url_defaults);
-        
+
         if ((isset($url_defaults[piklist::$prefix]['flow']) && !stristr($location, 'flow=')) && (isset($url_defaults[piklist::$prefix]['flow_page']) && !stristr($location, 'flow_page=')))
         {
           $url_arguments = array(
@@ -92,7 +97,7 @@ class Piklist_Workflow
               ,'flow_page' => urlencode($url_defaults[piklist::$prefix]['flow_page'])
             )
           );
-          
+
           $location .= (stristr($location, '?') ? '&' : null) . http_build_query(array_filter($url_arguments));
         }
       }
@@ -100,7 +105,7 @@ class Piklist_Workflow
 
     return $location;
   }
-  
+
   /**
    * get
    * Stendard get method.
@@ -137,6 +142,9 @@ class Piklist_Workflow
               ,'page' => 'Page'
               ,'post_type' => 'Post Type'
               ,'taxonomy' => 'Taxonomy'
+              ,'template' => 'Template'
+              ,'id' => 'ID'
+              ,'slug' => 'Slug'
               ,'role' => 'Role'
               ,'redirect' => 'Redirect'
               ,'header' => 'Header'
@@ -146,22 +154,22 @@ class Piklist_Workflow
               ,'layout' => 'Layout'
               ,'clear' => 'Clear'
             );
-            
+
     piklist::process_parts('workflows', $data, array('piklist_workflow', 'register_workflows_callback'));
-    
+
     self::$after_positions = array(
       'header' => 'in_admin_header'
       ,'body' => 'all_admin_notices'
       ,'title' => piklist_admin::is_post() ? 'edit_form_after_title' : 'piklist_admin_page_after_title'
       ,'editor' => 'edit_form_after_editor'
     );
-      
+
     foreach (self::$after_positions as $position => $filter)
     {
-      add_action($filter, array('piklist_workflow', 'render_workflow'));   
+      add_action($filter, array('piklist_workflow', 'render_workflow'));
     }
   }
-  
+
   /**
    * register_workflows_callback
    * Handle registered workflow tabs.
@@ -175,30 +183,32 @@ class Piklist_Workflow
   public static function register_workflows_callback($arguments)
   {
     $pagenow = basename($_SERVER['SCRIPT_NAME']);
-    
+
     extract($arguments);
 
     foreach ($data['flow'] as $flow)
     {
       $tab = $data['tab'] ? current($data['tab']) : null;
 
-      $data['flow_page'] = piklist::slug(($tab ? $tab . ' ' : null) . $data['title'], 'UTF-8');
+      $data['flow_page'] = piklist::slug($tab ? $tab : $data['title'], 'UTF-8');
       $data['flow_slug'] = $flow == piklist::dashes($flow) ? $flow : piklist::slug($flow, 'UTF-8');
-      
+      $data['flow_sub_page'] = $tab ? piklist::slug($data['title'], 'UTF-8') : false;
+
       if ((piklist_admin::is_user() || piklist_admin::is_term()) && $data['position'] == 'title')
       {
         $data['position'] = 'body';
       }
-    
+
       $workflow = array(
-        'part' => $part ? $path . '/parts/' . $folder . '/' . $part : null
+        'part' => isset($part) ? $path . '/parts/' . $folder . '/' . $part : null
         ,'data' => $data
       );
-    
+
       $url_arguments = array(
         piklist::$prefix => array(
           'flow' => $data['flow_slug']
           ,'flow_page' => $data['flow_page']
+          ,'flow_sub_page' => $data['flow_sub_page']
         )
       );
 
@@ -210,39 +220,43 @@ class Piklist_Workflow
       {
         unset($url_defaults[$variable]);
       }
-      
+
       $url = array_merge($url_defaults, $url_arguments);
-      
+
       if ($data['redirect'] != false)
       {
         /**
          * piklist_workflow_redirect_url
-         * 
+         *
          * @since 1.0
          */
         $data['redirect'] = apply_filters('piklist_workflow_redirect_url', $data['redirect'], $workflow, $data);
-      
-        $workflow['url'] = admin_url($data['redirect'] . (strstr($data['redirect'], '?') ? '&' : '?') . http_build_query(array_filter($url)));
+
+        $url_query_string = http_build_query(array_filter($url));
+
+        $workflow['url'] = is_admin() ? admin_url($data['redirect'] . (strstr($data['redirect'], '?') ? '&' : '?') . $url_query_string) : piklist::current_url() . '?' . $url_query_string;
       }
       elseif ($data['disable'] == false)
-      {      
+      {
         if ($url_arguments['post'])
         {
           unset($url['page']);
-    
+
           $url['action'] = 'edit';
-        
+
           $pagenow = 'post.php';
         }
 
-        $workflow['url'] = admin_url($pagenow . '?' . http_build_query(array_filter($url)));
+        $url_query_string = http_build_query(array_filter($url));
+
+        $workflow['url'] = is_admin() ? admin_url($pagenow . '?' . $url_query_string) : piklist::current_url() . '?' . $url_query_string;
       }
-  
+
       if (!isset(self::$workflows[$data['flow_slug']]))
       {
         self::$workflows[$data['flow_slug']] = array();
       }
-      
+
       if (!$tab)
       {
         if ($data['header'] === true)
@@ -264,12 +278,12 @@ class Piklist_Workflow
         {
           self::$sub_workflows[$data['flow_slug']] = array();
         }
-        
+
         if (!isset(self::$sub_workflows[$data['flow_slug']][$tab]))
         {
           self::$sub_workflows[$data['flow_slug']][$tab] = array();
         }
-      
+
         if (!empty($data['order']))
         {
           self::$sub_workflows[$data['flow_slug']][$tab][$data['order']] = $workflow;
@@ -281,7 +295,7 @@ class Piklist_Workflow
       }
     }
   }
-  
+
   /**
    * detect_workflow
    * Detect the workflow tabs according to their configuration.
@@ -290,7 +304,7 @@ class Piklist_Workflow
    * @static
    * @since 1.0
    */
-  public static function detect_workflow($folder)
+  public static function detect_workflow($folder = null, $shortcode = false)
   {
     global $pagenow, $post;
 
@@ -298,21 +312,21 @@ class Piklist_Workflow
     {
       return false;
     }
-
+    
     foreach (self::$workflows as $flow => $workflows)
     {
       uasort($workflows, array('piklist', 'sort_by_data_order'));
-      
+
       $workflows = array_values($workflows);
-      
+
       $has_data = false;
-      
+
       foreach ($workflows as $workflow)
       {
         if ($workflow['data']['header'])
         {
           $has_data = $workflow;
-          
+
           break;
         }
         elseif ($workflow['data']['position'] && ($workflow['data']['page'] || $workflow['data']['post_type'] || $workflow['data']['taxonomy']))
@@ -320,18 +334,19 @@ class Piklist_Workflow
           $has_data = $workflow;
         }
       }
-      
+
       if (!$has_data && is_null($workflows[0]['part']))
       {
         $has_data = $workflows[0];
       }
-      
-      if (self::is_allowed($has_data))  
+
+      if (self::is_allowed($has_data) || $shortcode)
       {
         $default_workflow = null;
         $default_sub_workflow = null;
         $tab = null;
         $sub_tab = null;
+        $active = null;
 
         foreach ($workflows as $index => &$workflow)
         {
@@ -354,12 +369,10 @@ class Piklist_Workflow
               $tab = piklist::slug($workflow['data']['title'], 'UTF-8');
               $data = $workflow['data'];
             }
-
-            $parent = piklist::slug($workflow['data']['title'], 'UTF-8');
-
-            if (isset(self::$sub_workflows[$flow][$parent]))
+            
+            if (isset(self::$sub_workflows[$flow][$tab]))
             {
-              $workflow['parts'] = self::$sub_workflows[$flow][$parent];
+              $workflow['parts'] = self::$sub_workflows[$flow][$tab];
 
               uasort($workflow['parts'], array('piklist', 'sort_by_data_order'));
 
@@ -380,22 +393,27 @@ class Piklist_Workflow
 
                   if ($sub_workflow['data']['active'])
                   {
-                    $workflow['data']['active'] = true;
-                    $tab = piklist::slug($workflow['data']['title'], 'UTF-8');
+                    $sub_workflow['data']['active'] = true;
                     $sub_tab = piklist::slug($sub_workflow['data']['title'], 'UTF-8');
                     $data = $workflow['data'];
                   }
 
-                  if ($workflow['data']['active'] && is_null($sub_tab))
-                  {
-                    $default_sub_workflow['data']['active'] = true;
-                    $sub_tab = !empty($default_sub_workflow['data']['title']) ? piklist::slug($default_sub_workflow['data']['title'], 'UTF-8') : null;
-                    $data = $default_sub_workflow['data'];
-                  }
                 }
               }
 
+              if ($workflow['data']['active'] && is_null($sub_tab))
+              {
+                $default_sub_workflow['data']['active'] = true;
+                $sub_tab = !empty($default_sub_workflow['data']['title']) ? piklist::slug($default_sub_workflow['data']['title'], 'UTF-8') : null;
+                $data = $default_sub_workflow['data'];
+              }
+
               $workflow['parts'] = array_values($workflow['parts']);
+            }
+            
+            if ($workflow['data']['active'])
+            {
+              $active = $workflow;
             }
           }
         }
@@ -406,38 +424,56 @@ class Piklist_Workflow
 
         if (!$tab)
         {
-          $default_workflow['data']['active'] = true;
-          $tab = piklist::slug($default_workflow['data']['title'], 'UTF-8');
-          $data = $default_workflow['data'];
-
-          if (!empty($default_workflow['parts']))
+          if(!empty($default_workflow))
           {
-            foreach ($default_workflow['parts'] as &$sub_workflow)
-            {
-              if ($sub_workflow['data']['default'] == true)
-              {
-                $sub_workflow['data']['active'] = true;
-                $sub_tab = piklist::slug($sub_workflow['data']['title'], 'UTF-8');
-                $data = $sub_workflow['data'];
+            $default_workflow['data']['active'] = true;
+            $tab = piklist::slug($default_workflow['data']['title'], 'UTF-8');
+            $data = $default_workflow['data'];
 
-                break;
+            if (!empty($default_workflow['parts']))
+            {
+              foreach ($default_workflow['parts'] as &$sub_workflow)
+              {
+                if ($sub_workflow['data']['default'] == true)
+                {
+                  $sub_workflow['data']['active'] = true;
+                  $sub_tab = piklist::slug($sub_workflow['data']['title'], 'UTF-8');
+                  $data = $sub_workflow['data'];
+
+                  break;
+                }
               }
+              unset($sub_workflow);
             }
           }
         }
 
-        self::$workflow = array(
-          'flow' => $flow
-          ,'tab' => $tab
-          ,'sub_tab' => $sub_tab
-          ,'data' => $data
-          ,'workflows' => $workflows
-          ,'pages' => $has_data['data']['page']
-        );
+        if (isset($data)) 
+        {
+          if (empty(self::$workflow['workflows'][0]['data']['layout'])) 
+          {
+            self::$workflow['layout'] = 'tab';
+          } 
+          else 
+          {
+            self::$workflow['layout'] = self::$workflow['workflows'][0]['data']['layout'];
+          }
+
+          self::$workflow = array(
+            'flow' => $flow
+            ,'tab' => $tab
+            ,'sub_tab' => $sub_tab
+            ,'data' => $data
+            ,'workflows' => $workflows
+            ,'pages' => $has_data['data']['page']
+            ,'layout' => empty($has_data['data']['layout']) ? 'tab' : $has_data['data']['layout']
+            ,'active' => $active
+          );
+        }
       }
     }
   }
-  
+
   /**
    * is_allowed
    * Determines if a workflow tab is allowed to be shown.
@@ -453,24 +489,24 @@ class Piklist_Workflow
   public static function is_allowed($data, $strict = true)
   {
     global $pagenow;
-    
+
     $allowed = !$strict;
-    
+
     // Check to see if there is an active flow
     if (isset($_REQUEST['flow']) && piklist::slug($flow, 'UTF-8') == $_REQUEST['flow'])
     {
       $allowed = true;
     }
-    
+
     // Check Pages
     $pages = $data['data']['page'];
     if (!empty($pages))
     {
       $allowed = in_array($pagenow, $pages);
-      
+
       if (isset($_REQUEST['page']))
       {
-        $allowed = in_array($_REQUEST['page'], $pages); 
+        $allowed = in_array($_REQUEST['page'], $pages);
       }
     }
 
@@ -487,22 +523,22 @@ class Piklist_Workflow
     }
 
     // Check which mode we are on for the term pages
-	if ($is_term = piklist_admin::is_term())
-	{
-		if ($is_term === 'new')
-		{
-	        $allowed = false;
-		}
+    if ($is_term = piklist_admin::is_term())
+    {
+      if ($is_term === 'new')
+      {
+        $allowed = false;
+      }
 
-		$taxonomies = $data['data']['taxonomy'];
-		$current_taxonomy = isset($_REQUEST['taxonomy']) ? $_REQUEST['taxonomy'] : false;
+      $taxonomies = $data['data']['taxonomy'];
+      $current_taxonomy = isset($_REQUEST['taxonomy']) ? $_REQUEST['taxonomy'] : false;
 
-		if (!empty($taxonomies) && $current_taxonomy)
-		{
-			$allowed = in_array($current_taxonomy, $taxonomies);
-		}
-	}
-    
+      if (!empty($taxonomies) && $current_taxonomy)
+      {
+        $allowed = in_array($current_taxonomy, $taxonomies);
+      }
+    }
+
     return $allowed;
   }
 
@@ -521,55 +557,33 @@ class Piklist_Workflow
   public static function is_active($data)
   {
     $data['active'] = false;
-    
+
     if ($data['header'] == true)
     {
       return $data;
     }
-    
+
     $is_active = false;
-    
-    if (isset($_REQUEST[piklist::$prefix]['flow_page']))
+    $tab = $data['tab'] ? current($data['tab']) : null;
+
+    if ($tab && isset($_REQUEST[piklist::$prefix]['flow_sub_page']))
+    {
+      $is_active = esc_attr($_REQUEST[piklist::$prefix]['flow_page']) === $data['flow_page'] && esc_attr($_REQUEST[piklist::$prefix]['flow_sub_page']) === $data['flow_sub_page'];
+    }
+    elseif (!$tab && isset($_REQUEST[piklist::$prefix]['flow_page']))
     {
       $is_active = esc_attr($_REQUEST[piklist::$prefix]['flow_page']) === $data['flow_page'];
     }
-    elseif (!empty($data))
+    else
     {
-      global $post, $current_user, $pagenow;
-      
-      $post = !$post ? (isset($_REQUEST['post']) ? get_post((int) $_REQUEST['post']) : false) : $post;
-
-      foreach ($data as $key => $value)
-      {
-        $value = is_array($value) ? array_filter($value) : $value;
-        
-        if (!empty($value))
-        {
-          switch ($key)
-          {
-            case 'post_type':
-
-              $is_active = ($post ? $post->post_type : (isset($_REQUEST['post_type']) && post_type_exists(esc_attr($_REQUEST['post_type'])) ? $_REQUEST['post_type'] : null)) == $value;
-              
-            break;
-          
-            case 'page':
-
-              $is_active = in_array($pagenow, $value);
-
-            break;
-          }
-        }
-      }
-
-      $is_active = $is_active == true && $data['default'] == true;
+      $is_active = $data['default'] == true;
     }
-    
+
     $data['active'] = $is_active;
 
     return $data;
   }
-  
+
   /**
    * render_workflow
    * Render a workflow if applicable.
@@ -582,25 +596,34 @@ class Piklist_Workflow
   {
     if (self::$workflow)
     {
-      $position = self::$workflow['workflows'][0]['data']['position'];
-      
-      $backtrace = debug_backtrace();
-      
-      foreach ($backtrace as $trace)
+      if (!self::$rendering)
       {
-        if ($trace['function'] == 'do_action' && isset($trace['args'][0]) && array_search($trace['args'][0], self::$after_positions) == $position)
+        $position = self::$workflow['workflows'][0]['data']['position'];
+
+        $backtrace = debug_backtrace();
+
+        foreach ($backtrace as $trace)
         {
-          self::$workflow['position'] = $position;
-          self::$workflow['layout'] = self::$workflow['workflows'][0]['data']['layout'];
-        
-          piklist::render('shared/admin-workflow', self::$workflow);
-          
-          break;
+          if ($trace['function'] == 'do_action' && isset($trace['args'][0]) && array_search($trace['args'][0], self::$after_positions) == $position)
+          {
+            self::$workflow['position'] = $position;
+
+            self::$rendering = true;
+
+            break;
+          }
         }
+      }
+
+      if (self::$rendering)
+      {
+        piklist::render(is_admin() ? 'shared/admin-workflow' : 'shared/workflow', self::$workflow);
+
+        self::$rendering = false;
       }
     }
   }
-  
+
   /**
    * part_data
    * Adds tab to all part types for easy association
@@ -623,10 +646,10 @@ class Piklist_Workflow
     {
       $data['flow'] = 'Flow';
     }
-    
+
     return $data;
   }
-  
+
   /**
    * part_process_callback
    * Checks to see if something is associated with a workflow tab
@@ -644,7 +667,7 @@ class Piklist_Workflow
   {
     /**
      * piklist_workflow_part_exclude_folders
-     * 
+     *
      * @since 1.0
      */
     $exclude_folders = apply_filters('piklist_workflow_part_exclude_folders', array('notices', 'pointers', 'help', 'widgets', 'shortcodes'), $part, $folder);
@@ -653,9 +676,9 @@ class Piklist_Workflow
     {
       return $part;
     }
-    
-    if ((is_null($part['data']['flow']) || is_null($part['data']['tab'])) 
-        || ((!in_array(self::$workflow['flow'], $part['data']['flow']) && !in_array('all', $part['data']['flow']))
+
+    if ((is_null($part['data']['flow']) || is_null($part['data']['tab']))
+          || ((!in_array(self::$workflow['flow'], $part['data']['flow']) && !in_array('all', $part['data']['flow']))
             || (!in_array(self::$workflow['tab'], $part['data']['tab']) && !in_array('all', $part['data']['tab']))
             || (is_array($part['data']['sub_tab']) && !in_array(self::$workflow['sub_tab'], $part['data']['sub_tab']) && !in_array('all', $part['data']['sub_tab']))
            )
@@ -663,10 +686,10 @@ class Piklist_Workflow
     {
       return null;
     }
-    
+
     return $part;
   }
-  
+
   /**
    * admin_body_class
    * Add custom classes to the admin body tag.
@@ -693,7 +716,7 @@ class Piklist_Workflow
 
     return $classes;
   }
-  
+
   /**
    * validate_part_parameter_skip
    * Determine if there are part parameters we don't want validated.
@@ -716,5 +739,37 @@ class Piklist_Workflow
     }
 
     return $skip;
+  }
+
+  /**
+   * shortcode
+   * Handle the shortcode for inserting a workflow
+   *
+   * @param array $attributes The attributes.
+   * @param string $content The content of the shortcode.
+   * @param string $tag The shortcode tag.
+   *
+   * @return string The output.
+   *
+   * @access public
+   * @static
+   * @since 1.0
+   */
+  public static function shortcode($attributes, $content = '', $tag)
+  {
+    extract(shortcode_atts(array(
+      'flow' => null
+    ), $attributes));
+
+    if ($flow)
+    {
+      $flow = piklist::slug($flow);
+
+      self::detect_workflow(null, $flow);
+
+      self::$rendering = true;
+
+      self::render_workflow($flow);
+    }
   }
 }

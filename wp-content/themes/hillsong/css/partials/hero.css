@@ -6,7 +6,7 @@ Error: Undefined variable: "$white".
 20:     transform: translateY(-50%);
 21:     width: 100%;
 22:     text-align: center;
-23:     h1, h2 {
+23:     h1, h3 {
 24:       color: $white;
 25:     }
 26: 
@@ -84,4 +84,4 @@ Backtrace:
 body:before {
   white-space: pre;
   font-family: monospace;
-  content: "Error: Undefined variable: \"$white\".\A         on line 24 of /Users/jordywichgers/Documents/GitHub/hillsong-shuttle/wp-content/themes/hillsong/sass/partials/hero.scss\A \A 19:     top: 50%;\A 20:     transform: translateY(-50%);\A 21:     width: 100%;\A 22:     text-align: center;\A 23:     h1, h2 {\A 24:       color: $white;\A 25:     }\A 26: \A 27:   }\A 28:   .shuttle-status {\A 29:     position: absolute;"; }
+  content: "Error: Undefined variable: \"$white\".\A         on line 24 of /Users/jordywichgers/Documents/GitHub/hillsong-shuttle/wp-content/themes/hillsong/sass/partials/hero.scss\A \A 19:     top: 50%;\A 20:     transform: translateY(-50%);\A 21:     width: 100%;\A 22:     text-align: center;\A 23:     h1, h3 {\A 24:       color: $white;\A 25:     }\A 26: \A 27:   }\A 28:   .shuttle-status {\A 29:     position: absolute;"; }

@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Shortcode
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -181,6 +181,7 @@ class Piklist_Shortcode
               ,'inline' => 'Inline'
               ,'preview' => 'Preview'
               ,'editor' => 'Editor'
+              ,'type' => 'Type'
             );
 
     piklist::process_parts('shortcodes', $data, array('piklist_shortcode', 'register_shortcodes_callback'));
@@ -237,13 +238,28 @@ class Piklist_Shortcode
   {
     if (self::$shortcodes[$tag])
     {
+      if (!empty($attributes))
+      {
+          
+          foreach ($attributes as $attribute => $attribute_value)
+          {
+            if (stristr($attribute_value, '%'))
+            {
+              $attributes[$attribute] = stripslashes(rawurldecode($attribute_value));
+            }
+          }
+      }
+
       ob_start();
       
       do_action('piklist_pre_render_shortcode', $attributes, self::$shortcodes[$tag]);
 
       if (self::$shortcodes[$tag]['render'])
       {
-        $attributes['content'] = $content;
+        if (isset($attributes['content'])) 
+        {
+          $attributes['content'] = $content;
+        }
         
         foreach (self::$shortcodes[$tag]['render'] as $render)
         {
@@ -596,5 +612,48 @@ class Piklist_Shortcode
     }
     
     return $classes;
+  }
+  
+  /**
+  * parse
+  * Parses a string for shortcodes
+  *
+  * @param string $string The content to parse.
+  *
+  * @return array A collection of shortcode objects.
+  *
+  * @access public
+  * @static
+  * @since 1.0
+  */
+  public static function parse($string) 
+  {
+    $shortcodes = array();
+
+    preg_match_all("/(?P<shortcode>(?:(?:\\s?\\[))(?P<name>[\\w\\-]{3,})(?:\\s(?P<attributes>[\\w\\d,\\s=\\\"\\'\\-\\+\\#\\%\\!\\~\\`\\&\\.\\s\\:\\/\\?\\|]+))?(?:\\])(?:(?P<content>[\\w\\d\\,\\!\\@\\#\\$\\%\\^\\&\\*\\(\\\\)\\s\\=\\\"\\'\\-\\+\\&\\.\\s\\:\\/\\?\\|\\<\\>]+)(?:\\[\\/[\\w\\-\\_]+\\]))?)/u", $string, $found, PREG_SET_ORDER);
+
+    foreach ($found as $data) 
+    {
+      $shortcode = array(
+        'name' => $data['name']
+        ,'attributes' => array()
+        ,'content' => $data['content']
+        ,'shortcode' => $data['shortcode']
+      );
+    
+      if (isset($data['attributes'])) 
+      {
+        preg_match_all("/(?<attribute>\\S+)=[\"']?(?P<value>(?:.(?![\"']?\\s+(?:\\S+)=|[>\"']))+.)[\"']?/u", $data['attributes'], $attributes, PREG_SET_ORDER);
+
+        foreach ($attributes as $attribute) 
+        {
+          $shortcode['attributes'][$attribute['attribute']] = $attribute['value'];
+        }
+      }
+      
+      array_push($shortcodes, $shortcode);
+    }
+
+    return $shortcodes;
   }
 }

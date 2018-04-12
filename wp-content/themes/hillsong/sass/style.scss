@@ -14,3 +14,12 @@ Tags: blog, custom-menu, featured-images, threaded-comments, translation-ready, 
 @import "partials/navbar.scss";
 @import "partials/hero.scss";
 @import "partials/typography.scss";
+@import "partials/icons.scss";
+@import "partials/get_your_ride.scss";
+
+body {
+  overflow-x: hidden;
+}
+.round {
+  border-radius: 50%;
+}

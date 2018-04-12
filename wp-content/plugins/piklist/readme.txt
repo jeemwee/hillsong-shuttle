@@ -1,9 +1,9 @@
 === PIKLIST | Rapid development framework ===
 Contributors: piklist, p51labs, sbruner, jason_the_adams
-Tested up to: 4.9
+Tested up to: 4.7
 Requires at least: 4.0
-Stable tag: 0.9.9.13
-Donate link: https://piklist.com/get-involved/
+Stable tag: 0.10
+Donate link: http://piklist.com/get-involved/
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -33,7 +33,7 @@ Piklist is a rapid development framework for WordPress that will let you concent
 
 
 = LEARN MORE =
-*   <a href="https://piklist.com/user-guide/">Piklist User Guide</a>
+*   <a href="http://piklist.com/learn/">Piklist User Guide</a>
 
 = Customize everything in WordPress =
 *   Post Types
@@ -134,6 +134,11 @@ Piklist comes with built-in Demos. If you find a field you like, just copy the c
 
 Code-based frameworks also allows you to version control your code, which is very difficult to do with a UI based framework. All you have to do is press delete by accident in a UI-based system, and you've just lost your work. With version control that never happens.
 
+= How can I contribute? =
+Go to our <a href="https://github.com/piklist/piklist">Github repository</a> and create an issue or pull request from the develop branch!
+
+Thank you for wanting to contribute! It helps everyone out!
+
 = What's the best way to get started with Piklist? =
 1. Install and activate the plugin.
 2. Go through our <a href="https://piklist.com/user-guide/tutorials/getting-started-with-piklist/">Getting Started with Piklist</a> tutorial.
@@ -142,10 +147,15 @@ Code-based frameworks also allows you to version control your code, which is ver
 
 == Changelog ==
 
-= 0.9.9.13 =
-Release Date: November 20, 2017
+= 0.9.9.14 =
+Release Date: December 13, 2017
 
-* UPDATE: updated all references to http to https
+* UPDATE: CSS updates for WordPress 4.9
+
+= 0.9.9.13 =
+Release Date: April 19, 2017
+
+* ENHANCED: Major code refactor
 
 = 0.9.9.12 =
 Release Date: April 5, 2017
@@ -162,21 +172,16 @@ Release Date: April 1, 2017
 * FIXED: Deleting items from add-more reindex properly.
 
 = 0.9.9.10 =
-Release Date: March 30, 2017
 
-* FIXED: Illegal string offset 'field' notice in class-piklist-form.php (thanks Luigi Laezza)
-* FIXED: PHP 7 changed the order in which nested variables are evaluated.
-* FIXED: Arithmetic warnings in PHP 7.1
-* FIXED: Allow JS validation to work with Piklist validation.
-* FIXED: taxonomy scope in select field not reflecting stored choice.
-* FIXED: Submitdiv priority being lost.
-* FIXED: "Private" appears in Post Status in quick editing.
-* FIXED: Media workflows are now under tabs.
-* FIXED: Taxonomy workflow tabs show as expected.
-* FIXED: Close div in meta box separator.
-* FIXED: Label name is supposed to be plural.
-* UPDATE: Safer global retrieval for PHP 7.
-* UPDATE: Add further parameter support to help sections.
+* ENHANCED: Allow filtering of post_type_labels() with new filter: piklist_post_type_labels_locale
+* ENHANCED: Allow filtering of taxonomy_labels() with new filter: piklist_taxonomy_labels_locale
+* ENHANCED: Workflows now support ID and TEMPLATE comment block parameters.
+* ENHANCED: Help sections now support post type, taxonomy, post status, template, post format, setting, and taxonomy parameters
+* FIXED: Advanced add-more groups now save properly.
+* FIXED: Widget validation.
+* FIXED: Colorpicker and datepicker work as expected in Widgets.
+* FIXED: tinyMCE bug where nested editable within a non editable element would cause scroll on focus in Chrome. Props @rcantor
+* FIXED: taxonomy scope in select field not reflecting stored choice
 
 
 = 0.9.9.9 =
@@ -188,12 +193,11 @@ Release Date: June 20, 2016
 * FIXED: duplicate name in widget class.
 
 = 0.9.9.8 =
-Release Date: June 16, 2016
 
-* ENHANCED: WordPress 4.5 compatible
+* ENHANCED: Major updates to Extend.
+* ENHANCED: Major updates to Relationships.
+* FIXED: Removed editor_height default from editor field.
 
-= 0.9.9.7 =
-* FIXED: Updated upgrade script.
 
 = 0.9.9.6 =
 * FIX: Sanitization plays nice with Validation.
@@ -213,9 +217,9 @@ Release Date: June 16, 2016
 * NEW: Validation rule: 'disabled', to make a field disabled.
 * NEW: unset_value option for checkboxes.
 * ENHANCED: Removed old responsive_admin() function.
-* ENHANCED: Dragging the editor in add-mores is easier.
+* ENHANCED: Dragging the editor in add mores is easier.
 * ENHANCED: Validation and Sanitization updates.
-* FIX: Validation and Sanitiztion in multi-level grouped add-mores.
+* FIX: Validation and Sanitiztion in multi-level grouped add mores.
 
 = 0.9.9.3 =
 * ENHANCED: File field and Editor highlight better when required.
@@ -223,7 +227,7 @@ Release Date: June 16, 2016
 * FIX: Piklist allows posts to save normally. Thanks Mehdi for letting us test on your site!
 * FIX: Validation rules within groups work as expected.
 * FIX: Validating certain fields within widgets work as expected.
-* FIX: Editors in add-mores now retain content markup.
+* FIX: Editors in add mores now retain content markup.
 * FIX: Multiple User Roles are now saving.
 
 = 0.9.9.2 =
@@ -274,9 +278,9 @@ Release Date: June 16, 2016
 * NEW: Dynamic Meta Boxes
 
 = 0.9.5n =
-* ENHANCED: Added easier pulling of Add-more data. Props @jasontheadams
+* ENHANCED: Added easier pulling of Add more data. Props @jasontheadams
 * ENHANCED: 'multiple' => false works with Media Uploader.
-* ENHANCED: 'sortable' => true/false works with Add-mores.
+* ENHANCED: 'sortable' => true/false works with Add mores.
 
 = 0.9.5m =
 * FIXED: Non-image files can be removed from file upload field.
@@ -308,7 +312,7 @@ Release Date: June 16, 2016
 * FIXED: Updated editors
 * FIXED: Better Javascript wrapping
 * FIXED: Drag and drop issues work as expected.
-* FIXED: Editors work nicely in grouped add-mores.
+* FIXED: Editors work nicely in grouped add mores.
 * FIXED: Tool tips look great in the main post column and the side sortables.
 * Lots of bug fixes.
 
@@ -370,7 +374,7 @@ Release Date: June 16, 2016
 * FIXED: Removed object_id from fields.
 * FIXED: Language files load properly.
 * FIXED: Locked notice works correctly on Multisite.
-* ENHANCED: Field conditions support add-mores.
+* ENHANCED: Field conditions support add mores.
 * ENHANCED: Field conditions support serialize groups.
 * ENHANCED: Field Columns switch to right margins.
 * ENHANCED: Right Now widget css update.
@@ -388,9 +392,9 @@ Release Date: June 16, 2016
 * ENHANCED: Tooltips match WordPress default themes.
 * ENHANCED: index.php files are ignored in parts folders.
 * FIXED: Quick edit buttons work properly.
-* FIXED: Textarea values do not carry over in Add-Mores. Props Daniel Rampanelli
+* FIXED: Textarea values do not carry over in Add mores. Props Daniel Rampanelli
 * FIXED: Preview button only shows for Public Post Types. Props Daniel Rampanelli
-* FIXED: Adding fields to an already save Add-More works properly. Props Daniel Rampanelli
+* FIXED: Adding fields to an already save Add more works properly. Props Daniel Rampanelli
 * FIXED: Autosaves triggered by "Preview Changes". Props Daniel Rampanelli
 * FIXED: Field attributes properly accept a zero value. Props @jasontheadams
 * FIXED: piklist_empty_post_title filter now works as expected.
@@ -419,13 +423,13 @@ Release Date: June 16, 2016
 
 = 0.9.2 =
 * NEW: Multiselect field.
-* NEW DEMO: Post Editor in an Add-more.
-* IMPROVED: Add-mores are better than ever.
+* NEW DEMO: Post Editor in an Add more.
+* IMPROVED: Add mores are better than ever.
 * FIXED: Dashboard widgets drag-and-drop properly.
 * FIXED: Fixed Notices.
 
 = 0.9.1 =
-* FIXED: Add-mores can now contain empty values.
+* FIXED: Add mores can now contain empty values.
 * FIXED: body_class function works better with Jetpack.
 
 = 0.9.0 =
@@ -438,14 +442,14 @@ Release Date: June 16, 2016
 * IMPROVED: Comma-separated lists of Post Types or Taxonomies in meta-boxes or term files can contain spaces.
 * IMPROVED: Use $page_icon instead of $icon.
 * IMPROVED: Use $menu_icon instead of $icon_url.
-* FIXED: Editing text boxes for Add-mores work in Firefox.
+* FIXED: Editing text boxes for Add mores work in Firefox.
 * FIXED: Dashboard widget layout saves properly.
 * FIXED: $attributes in Editor field should be $options.
 * FIXED: Custom Post Statuses retain order when used with multiple CPTs.
 
 = 0.8.0b6 =
 * IMPROVED: Multiple Author Roles are turned off by default.
-* IMPROVED: Add-mores are now even more awesome.
+* IMPROVED: Add mores are now even more awesome.
 * FIXED: Checkboxes.
 * FIXED: Tab Spacing.
 * FIXED: User Taxonomy data saves properly.
@@ -473,7 +477,7 @@ Release Date: June 16, 2016
 
 = 0.8.0b1 =
 * Now requires WordPress 3.4+.
-* NEW: Infinite Add-Mores!
+* NEW: Infinite Add mores!
 * NEW: Relationship field!
 * NEW: Multiple User Roles!
 * NEW: User Taxonomies!
@@ -506,7 +510,7 @@ Release Date: June 16, 2016
 * FIXED: Long Post Status lists now wrap nicely.
 
 = 0.7.1 =
-* FIXED: Add-mores save correctly when adding/deleting rows.
+* FIXED: Add mores save correctly when adding/deleting rows.
 * FIXED: Media meta saves without errors.
 * FIXED: Settings save properly when using multiple tabs.
 * FIXED: Logged-in user can now save user meta for any user.
@@ -582,7 +586,7 @@ Release Date: June 16, 2016
 = 0.5.9 =
 * NEW: Allow multiple nested fields.
 * NEW: Implemented GET Field value function.
-* FIXED: add-more fields.
+* FIXED: add more fields.
 * FIXED: Conditonal fields.
 * FIXED: Auto update fields.
 * FIXED: issue with plugin folders alphabetically higher than "piklist".
@@ -641,6 +645,6 @@ Release Date: June 16, 2016
 
 1. Less code required: Creating fields in Piklist is super simple, and in most cases the same code can be used anywhere: Post Types, Settings, Taxonomies, User Profiles and Widgets.
 2. Post relationships: You'll wish all relationships were this easy.
-3. Add-mores: The infinite repeater field.
+3. Add mores: The infinite repeater field.
 4. WorkFlows: The tab system you never knew was possible.
 5. Multiple user roles: Better security, more flexibility.

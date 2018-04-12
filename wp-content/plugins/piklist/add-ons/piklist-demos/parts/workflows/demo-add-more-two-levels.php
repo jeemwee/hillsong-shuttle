@@ -3,7 +3,7 @@
 Title: Two Levels
 Order: 20
 Flow: Demo Workflow
-Tab: Add-More's
+Tab: Add more's
 */
 ?>
 
@@ -12,7 +12,7 @@ Tab: Add-More's
   <h3><?php _e('Your infinite repeater field.', 'piklist-demo'); ?></h3>
 
   <p>
-    <?php _e('Piklist AddMore fields are the repeater field you always dreamed of. Group together as many fields as you want and make them repeat indefinitely. Or place an Add-More within an Add-More within an Add-more...', 'piklist-demo');?>
+    <?php _e('Piklist add more fields are the repeater field you always dreamed of. Group together as many fields as you want and make them repeat indefinitely. Or place an add more within an add more within an Add more ...', 'piklist-demo');?>
   </p>
   
 </div>

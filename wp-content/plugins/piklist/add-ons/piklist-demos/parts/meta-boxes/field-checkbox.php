@@ -19,7 +19,7 @@ Flow: Demo Workflow
       ,'third' => 'Third Choice'
     )
   ));
-  
+
   piklist('field', array(
     'type' => 'checkbox'
     ,'field' => 'checkbox_add_more'
@@ -32,7 +32,7 @@ Flow: Demo Workflow
       ,'third' => 'Third Choice'
     )
   ));
-  
+
   piklist('field', array(
     'type' => 'checkbox'
     ,'field' => 'checkbox_inline'
@@ -44,7 +44,7 @@ Flow: Demo Workflow
       ,'that' => 'That'
     )
   ));
- 
+
   piklist('field', array(
     'type' => 'group'
     ,'field' => 'checkbox_list'
@@ -78,7 +78,7 @@ Flow: Demo Workflow
       )
     )
   ));
-  
+
   piklist('field', array(
     'type' => 'checkbox'
     ,'field' => 'checkbox_nested'
@@ -105,6 +105,19 @@ Flow: Demo Workflow
     )
   ));
 
+  piklist('field', array(
+    'type'    => 'checkbox-tree',
+    'field'   => 'checkbox_tree',
+    'label'   => 'Checkbox Tree',
+    'choices' => piklist('choice_tree', get_terms('category', array('hide_empty' => false))),
+    'options' => array(
+      'scrollable' => true,
+      'height' => '450px'
+    )
+  ));
+
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

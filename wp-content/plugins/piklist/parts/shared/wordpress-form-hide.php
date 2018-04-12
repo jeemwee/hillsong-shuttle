@@ -46,11 +46,11 @@
     body.piklist-workflow-active.edit-tags-php .term-name-wrap,
     body.piklist-workflow-active.edit-tags-php .term-slug-wrap,
     body.piklist-workflow-active.edit-tags-php .term-parent-wrap,
-    body.piklist-workflow-active.edit-tags-php .term-description-wrap
+    body.piklist-workflow-active.edit-tags-php .term-description-wrap,
 		body.piklist-workflow-active.term-php .term-name-wrap,
-		body.piklist-workflow-active.term-php .term-slug-wrap,
-		body.piklist-workflow-active.term-php .term-parent-wrap,
-		body.piklist-workflow-active.term-php .term-description-wrap  {
+    body.piklist-workflow-active.term-php .term-slug-wrap,
+    body.piklist-workflow-active.term-php .term-parent-wrap,
+    body.piklist-workflow-active.term-php .term-description-wrap  {
       display: none;
     }
 

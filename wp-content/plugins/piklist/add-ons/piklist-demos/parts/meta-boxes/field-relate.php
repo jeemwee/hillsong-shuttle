@@ -9,7 +9,6 @@ Sub Tab: Basic
 
   piklist('field', array(
     'type' => 'checkbox'
-    ,'field' => '_' . piklist::$prefix . 'relate_post'
     ,'label' => __('Relate Posts', 'piklist-demo')
     ,'choices' => piklist(
       get_posts(array(
@@ -50,11 +49,11 @@ Sub Tab: Basic
       <?php endforeach; ?>
     </ol>
 
-    <hr />
-
   <?php endif;
   
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

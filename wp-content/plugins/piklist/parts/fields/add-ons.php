@@ -1,8 +1,7 @@
-
 <?php 
   
   $values = array_keys($choices);
-  
+    
   foreach ($choices as $_add_on => $_name):
     if (piklist_add_on::$available_add_ons[$_add_on]['plugin']):
       unset($choices[$_add_on]);
@@ -20,11 +19,11 @@
     <div class="piklist-field-add-on">  
   
       <h3>
-        <?php echo piklist_add_on::$available_add_ons[$values[$index]]['Name']; ?>
+        <?php echo piklist_add_on::$available_add_ons[$values[$index]]['name']; ?>
       </h3>
     
       <p>
-        <?php echo piklist_add_on::$available_add_ons[$values[$index]]['Description']; ?>
+        <?php echo piklist_add_on::$available_add_ons[$values[$index]]['description']; ?>
       </p>
     
       <input 
@@ -36,8 +35,8 @@
         <?php echo piklist_form::attributes_to_string($attributes); ?>
       />
     
-      <a href="#<?php echo piklist::dashes(piklist_add_on::$available_add_ons[$values[$index]]['Name']); ?>" class="button<?php echo $active ? '' : '-primary'; ?> piklist-field-add-on-button">
-        <?php $active ? _e('Disable','piklist') : _e('Activate','piklist');?>
+      <a href="#<?php echo piklist::dashes(piklist_add_on::$available_add_ons[$values[$index]]['name']); ?>" class="button<?php echo $active ? '' : '-primary'; ?> piklist-field-add-on-button">
+        <?php $active ? _e('Disable','piklist') : _e('Activate', 'piklist');?>
       </a>
 
       <?php if (isset($settings[$values[$index]])): ?>

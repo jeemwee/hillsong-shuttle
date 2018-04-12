@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Taxonomy
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -36,18 +36,26 @@ class Piklist_Taxonomy
    */
   public static function _construct()
   {
-	add_action('piklist_activate', array('piklist_taxonomy', 'activate'));
+    global $wp_version;
 
-	add_action('init', array('piklist_taxonomy', 'init'));
-	add_action('admin_init', array('piklist_taxonomy', 'register_meta_boxes'), 50);
-	add_action('registered_taxonomy',  array('piklist_taxonomy', 'registered_taxonomy'), 10, 3);
-	add_action('admin_menu', array('piklist_taxonomy', 'admin_menu'));
+    add_action('piklist_activate', array('piklist_taxonomy', 'activate'));
 
-	add_filter('terms_clauses', array('piklist_taxonomy', 'terms_clauses'), 10, 3);
-	add_filter('get_terms_args', array('piklist_taxonomy', 'get_terms_args'), 0);
-	add_filter('parent_file', array('piklist_taxonomy', 'parent_file'));
-	add_filter('sanitize_user', array('piklist_taxonomy', 'restrict_username'));
-	add_filter('piklist_meta_tables_sort', array('piklist_taxonomy', 'piklist_meta_tables_sort'));
+    add_action('admin_init', array('piklist_taxonomy', 'register_meta_boxes'), 50);
+    add_action('registered_taxonomy',  array('piklist_taxonomy', 'registered_taxonomy'), 10, 3);
+    add_action('admin_menu', array('piklist_taxonomy', 'admin_menu'));
+
+    add_filter('wp_redirect', array('piklist_taxonomy', 'wp_redirect'), 10, 2);
+    add_filter('parent_file', array('piklist_taxonomy', 'parent_file'));
+    add_filter('sanitize_user', array('piklist_taxonomy', 'restrict_username'));
+    add_filter('piklist_meta_tables_sort', array('piklist_taxonomy', 'piklist_meta_tables_sort'));
+
+    // Load before termmeta was native to WordPress
+    if ( version_compare($wp_version, '4.4.0', '<') )
+    {
+      add_filter('init', array('piklist_taxonomy', 'register_tables'));
+      add_filter('terms_clauses', array('piklist_taxonomy', 'terms_clauses'), 10, 3);
+      add_filter('get_terms_args', array('piklist_taxonomy', 'get_terms_args'), 0);
+    }
   }
 
   /**
@@ -69,19 +77,6 @@ class Piklist_Taxonomy
     $meta_tables['term_id'] = $wpdb->prefix . 'termmeta';
 
     return $meta_tables;
-  }
-
-  /**
-   * init
-   * Initializes system.
-   *
-   * @access public
-   * @static
-   * @since 1.0
-   */
-  public static function init()
-  {
-    self::register_tables();
   }
 
   /**
@@ -176,6 +171,8 @@ class Piklist_Taxonomy
               ,'order' => 'Order'
               ,'taxonomy' => 'Taxonomy'
               ,'new' => 'New'
+              ,'id' => 'ID'
+              ,'slug' => 'Slug'
             );
 
     piklist::process_parts('terms', $data, array('piklist_taxonomy', 'register_meta_boxes_callback'));
@@ -205,7 +202,8 @@ class Piklist_Taxonomy
       {
         self::$meta_boxes[$data['taxonomy']] = array();
 
-        add_action($data['taxonomy'] . '_edit_form_fields', array('piklist_taxonomy', 'meta_box'), 10, 2);
+        add_action($data['taxonomy'] . '_edit_form_fields', array('piklist_taxonomy', 'meta_box_edit'), 10, 2);
+        add_action($data['taxonomy'] . '_add_form_fields', array('piklist_taxonomy', 'meta_box_new'), 10, 1);
       }
 
       foreach (self::$meta_boxes[$data['taxonomy']] as $key => $meta_box)
@@ -218,6 +216,11 @@ class Piklist_Taxonomy
 
       if (isset($data['order']))
       {
+        while (isset(self::$meta_boxes[$data['taxonomy']][$data['order']]))
+        {
+          $data['order']++;
+        }
+
         self::$meta_boxes[$data['taxonomy']][$data['order']] = $arguments;
       }
       else
@@ -228,7 +231,22 @@ class Piklist_Taxonomy
   }
 
   /**
-   * meta_box
+   * meta_box_new
+   * Render meta box in add form.
+   *
+   * @param string $taxonomy The taxonomy.
+   *
+   * @access public
+   * @static
+   * @since 1.0
+   */
+  public static function meta_box_new($taxonomy)
+  {
+    self::meta_box($taxonomy, true);
+  }
+
+  /**
+   * meta_box_edit
    * Render meta box.
    *
    * @param object $term The term object.
@@ -238,7 +256,23 @@ class Piklist_Taxonomy
    * @static
    * @since 1.0
    */
-  public static function meta_box($term = null, $taxonomy)
+  public static function meta_box_edit($term = null, $taxonomy)
+  {
+    self::meta_box($taxonomy);
+  }
+
+  /**
+   * meta_box
+   * Render meta box.
+   *
+   * @param string $taxonomy The taxonomy.
+   * @param bool $new Whether this is for the new form or edit form.
+   *
+   * @access public
+   * @static
+   * @since 1.0
+   */
+  public static function meta_box($taxonomy, $new = false)
   {
     if ($taxonomy)
     {
@@ -248,20 +282,26 @@ class Piklist_Taxonomy
 
       foreach (self::$meta_boxes[$taxonomy] as $_taxonomy => $meta_box)
       {
-        piklist::render('shared/meta-box-seperator', array(
-          'meta_box' => $meta_box
-          ,'wrapper' => 'term_meta'
-          ,'close' => $close
-        ), false);
-
-        $close = true;
-
-        foreach ($meta_box['render'] as $render)
+        if ($meta_box['data']['new'] == $new)
         {
-          piklist::render($render, array(
-            'taxonomy' => $_taxonomy
-            ,'data' => $meta_box['data']
+          piklist::render('shared/meta-box-seperator', array(
+            'meta_box' => $meta_box
+            ,'wrapper' => 'term_meta' . ($new ? '_new' : null)
+            ,'close' => $close
           ), false);
+
+          if (!$new)
+          {
+            $close = true;
+          }
+
+          foreach ($meta_box['render'] as $render)
+          {
+            piklist::render($render, array(
+              'taxonomy' => $_taxonomy
+              ,'data' => $meta_box['data']
+            ), false);
+          }
         }
       }
     }
@@ -271,27 +311,26 @@ class Piklist_Taxonomy
    * activate
    * Creates custom tables.
    *
-   * @param bool $network_wide Should the table be added network wide.
-   *
-   * @return
-   *
    * @access public
    * @static
    * @since 1.0
    */
-  public static function activate($network_wide)
+  public static function activate()
   {
+    global $wpdb;
+
+    $limit = stristr($wpdb->collate, 'mb4') ? 191 : 255;
+
     $table = piklist::create_table(
       'termmeta'
       ,'meta_id bigint(20) unsigned NOT NULL auto_increment
         ,term_id bigint(20) unsigned NOT NULL default "0"
-        ,meta_key varchar(255) default NULL
+        ,meta_key varchar(' . $limit . ') default NULL
         ,meta_value longtext
         ,PRIMARY KEY (meta_id)
         ,KEY term_id (term_id)
         ,KEY meta_key (meta_key)'
-      ,$network_wide
-   );
+    );
   }
 
   /**
@@ -393,7 +432,7 @@ class Piklist_Taxonomy
   {
     global $pagenow;
 
-    if (!empty($_REQUEST['taxonomy']) && isset(self::$taxonomies[$_REQUEST['taxonomy']]) && in_array($pagenow, array('edit-tags.php', 'term.php')))
+    if (!empty($_REQUEST['taxonomy']) && isset(self::$taxonomies[$_REQUEST['taxonomy']]) && (in_array($pagenow, array('edit-tags.php', 'term.php'))))
     {
       return 'users.php';
     }
@@ -485,11 +524,43 @@ class Piklist_Taxonomy
   public static function wp_redirect($location, $status)
   {
     $url = parse_url($location);
-    parse_str($url['query'], $url_defaults);
 
-    if ((stristr($url['path'], 'edit-tags.php') || stristr($url['path'], 'term.php')) && isset($url_defaults['taxonomy']) && isset($url_defaults['message']))
+    if (isset($url['query']) && !empty($url['query']))
     {
-      $location .= '&action=edit&tag_ID=' . (int) $_POST['tag_ID'];
+      parse_str($url['query'], $url_defaults);
+
+      if (stristr($url['path'], 'edit-tags.php') || stristr($url['path'], 'term.php')
+          && isset($url_defaults['taxonomy'])
+          && isset($url_defaults['message'])
+          && $status == 302
+          && isset($_POST)
+          && isset($_POST['_wp_original_http_referer'])
+          && (isset($_POST['action']) && $_POST['action'] == 'editedtag')
+          && (isset($_POST['tag_ID']) && $_POST['tag_ID'] == $url_defaults['tag_ID'])
+         )
+      {
+        $original_url = parse_url($_POST['_wp_original_http_referer']);
+
+        parse_str($original_url['query'], $original_url_defaults);
+
+        $wp_http_referer = 'edit-tags.php';
+        $wp_http_referer = add_query_arg('taxonomy', $url_defaults['taxonomy'], $wp_http_referer);
+        
+        if (isset($original_url_defaults['post_type']))
+        {
+          $wp_http_referer = add_query_arg('post_type', $original_url_defaults['post_type'], $wp_http_referer);
+        }
+        
+        $wp_http_referer = admin_url($wp_http_referer);
+
+        $location = 'edit-tags.php';
+        $location = add_query_arg('taxonomy', $url_defaults['taxonomy'], $location);
+        $location = add_query_arg('action', 'edit', $location);
+        $location = add_query_arg('message', $url_defaults['message'], $location);
+        $location = add_query_arg('tag_ID', $url_defaults['tag_ID'], $location);
+        $location = add_query_arg('wp_http_referer', urlencode($wp_http_referer), $location);
+        $location = admin_url($location);
+      }
     }
 
     return $location;

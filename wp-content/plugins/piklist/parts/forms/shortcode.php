@@ -18,6 +18,7 @@ Message: Shortcode Updated.
   if (in_array($action, array('insert', 'update'))):
     
     $forms = array();
+    
     if (isset($shortcodes[$name])):
 
       foreach ($shortcodes[$name]['render'] as $render):
@@ -37,6 +38,12 @@ Message: Shortcode Updated.
       $data = $shortcode_data;
       $data['attributes'] = $shortcode;
       $data['index'] = $index;
+        
+      if (isset($_REQUEST[piklist::$prefix . 'post'])):
+        
+        $data['post_id'] = (int) $_REQUEST[piklist::$prefix . 'post']['ID'];
+      
+      endif;
         
       foreach ($forms as $form):
         
@@ -63,13 +70,6 @@ Message: Shortcode Updated.
       endforeach;
 
     endif;
-    
-    piklist('field', array(
-      'type' => 'hidden'
-      ,'scope' => 'shortcode'
-      ,'field' => '_index'
-      ,'value' => $index
-    ));
     
     foreach ($shortcode_data as $attribute => $value):
 

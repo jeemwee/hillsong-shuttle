@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Notice
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -41,7 +41,6 @@ class Piklist_Notice
       add_action('current_screen', array('piklist_notice', 'register_notice'));
       add_action('admin_notices', array('piklist_notice', 'notice'));
       add_action('wp_ajax_piklist_notice', array('piklist_notice', 'ajax'));
-      add_action('wp_ajax_nopriv_piklist_notice', array('piklist_notice', 'ajax'));
     }
   }
    
@@ -62,8 +61,10 @@ class Piklist_Notice
               ,'role' => 'Role'
               ,'page' => 'Page'
               ,'dismiss' => 'Dismiss'
+              ,'id' => 'ID'
+              ,'slug' => 'Slug'
             );
-            
+
     piklist::process_parts('notices', $data, array('piklist_notice', 'register_notice_callback'));
   }
 
@@ -134,7 +135,7 @@ class Piklist_Notice
    */
   public static function ajax()
   {
-    if (isset($_REQUEST['id']))
+    if (isset($_POST['id']))
     {
       $user_id = get_current_user_id();
 
@@ -150,7 +151,7 @@ class Piklist_Notice
         update_user_meta($user_id, self::$notice_meta_key, $dismissed);
       }
     }
-    
-    wp_die();
+
+    // wp_die();
   }
 }

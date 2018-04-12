@@ -30,6 +30,8 @@ Flow: Demo Workflow
     ,'value' => sprintf(__('Pull information and display it in the proper format. Does that sound good %s?', 'piklist-demo'), $current_user->display_name)
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Settings Section'

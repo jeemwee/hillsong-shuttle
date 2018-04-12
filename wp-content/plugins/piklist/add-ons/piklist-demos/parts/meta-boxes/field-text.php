@@ -11,7 +11,7 @@ Flow: Demo Workflow
 ?>
 
 <div class="piklist-demo-highlight">
-  <?php _e('Text fields are at the core of most forms, and easily created with Piklist. Tooltip help can be added to any field with one line of code.', 'piklist-demo');?>
+  <?php _e('Text fields are at the core of most forms, and easily created with Piklist. Tooltip help can be added to any field with one line of code.', 'piklist-demo'); ?>
 </div>
 
 <?php
@@ -19,6 +19,7 @@ Flow: Demo Workflow
   piklist('field', array(
     'type' => 'text'
     ,'field' => 'text'
+    ,'scope' => 'post_meta'
     ,'label' => __('Text', 'piklist-demo')
     ,'help' => __('You can easily add tooltips to your fields with the help parameter.', 'piklist-demo')
     ,'attributes' => array(
@@ -38,7 +39,9 @@ Flow: Demo Workflow
       ,'class' => 'large-text'
     )
   ));
-
+  
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

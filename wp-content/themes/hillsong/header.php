@@ -54,9 +54,6 @@
             </nav>
 	</header><!-- #masthead -->
   <div id="content" class="site-content">
-		<div class="container">
-			<div class="row">
-        <?php
-        get_template_part( 'template-parts/hero', get_post_format() );
-
-        ?>
+    <?php
+      get_template_part( 'template-parts/hero', get_post_format() );
+    ?>

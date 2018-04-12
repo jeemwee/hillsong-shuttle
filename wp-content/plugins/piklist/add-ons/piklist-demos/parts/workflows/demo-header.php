@@ -28,7 +28,7 @@ if (in_array($pagenow, array('profile.php', 'user-edit.php'))): ?>
   </h2>
 
 <?php
-  elseif (in_array($pagenow, array('edit-tags.php', 'term.php'))):
+  elseif (in_array($pagenow, array('edit-tags.php', 'term.php'))) :
     $taxonomy = get_taxonomy($taxnow);
 ?>
 

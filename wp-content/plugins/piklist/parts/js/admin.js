@@ -2,19 +2,19 @@
   Updates or enhancements to Piklist Functionality
 --------------------------------------------------------------------------------- */
 
-;(function($, window, document, undefined) 
+;(function($, window, document, undefined)
 {
   'use strict';
 
   $(document).ready(function()
-  {  
+  {
     $('body').wptabs();
-    
+
     piklist_admin.init();
   });
-  
+
   var piklist_admin = {
-  
+
     init: function()
     {
       piklist_admin.body_class();
@@ -23,6 +23,7 @@
       piklist_admin.post_submit_meta_box();
       piklist_admin.thickbox();
       piklist_admin.user_forms();
+      piklist_admin.tag_forms();
       piklist_admin.empty_elements();
       piklist_admin.list_tables();
       piklist_admin.widgets();
@@ -32,7 +33,7 @@
       piklist_admin.pointers();
       piklist_admin.add_ons();
     },
-    
+
     body_class: function()
     {
       if (window.location != window.parent.location)
@@ -40,7 +41,7 @@
         $('body').addClass('piklist-in-iframe');
       }
     },
-    
+
     notices: function()
     {
       $(document).on('click', '.notice.is-dismissible > .notice-dismiss', function(event)
@@ -56,14 +57,14 @@
         });
       });
     },
-    
+
     pointers: function()
     {
-      $.each(piklist.pointers, function(index) 
+      $.each(piklist.pointers, function(index)
       {
         var pointer_id = this.pointer_id,
           options = $.extend(this.options, {
-            close: function() 
+            close: function()
             {
               $.ajax({
                 type: 'POST',
@@ -76,13 +77,13 @@
               });
             }
           });
-      
+
         $(this.target)
           .pointer(options)
           .pointer('open');
       });
     },
-    
+
     add_ons: function()
     {
       if ($('.piklist-field-add-on-button').length > 0)
@@ -90,7 +91,7 @@
         $('.piklist-field-add-on-button').click(function(event)
         {
           event.preventDefault();
-        
+
           if ($(this).hasClass('button-primary'))
           {
             $(this).removeClass('button-primary').addClass('button').text('Disable').prev(':checkbox').attr('checked', true);
@@ -104,7 +105,7 @@
         });
       }
     },
-    
+
     empty_elements: function()
     {
       $('#post-body-content').each(function()
@@ -116,11 +117,22 @@
       });
     },
 
+    tag_forms: function()
+    {
+      $('body.wp-admin.edit-tags-php form#addtag :submit').on('click', function(event)
+      {
+        $('body.wp-admin.edit-tags-php form#addtag :input#tag-name').on('change', function(event)
+        {
+          window.location.href = window.location.href;
+        });
+      });
+    },
+
     user_forms: function()
     {
-      if ('WebkitAppearance' in document.documentElement.style) 
+      if ('WebkitAppearance' in document.documentElement.style)
       {
-        setTimeout(function() 
+        setTimeout(function()
         {
           $('input:-webkit-autofill').each(function()
           {
@@ -136,7 +148,7 @@
     thickbox: function()
     {
       var frame;
-      
+
       $(document).on('click', 'body.piklist-in-iframe .piklist-upload-file-button, body.piklist-in-iframe .wp-media-buttons button', function()
       {
         $('#TB_iframeContent', window.parent.document).css({
@@ -145,12 +157,12 @@
           ,'left': 0
           ,'height': $('#TB_window', window.parent.document).height()
         });
-        
+
         setTimeout(function()
         {
           var frame = typeof wp.media.frames.file_frame != 'undefined' ? wp.media.frames.file_frame : wp.media.frame;
 
-          frame.on('close', function() 
+          frame.on('close', function()
           {
             $('#TB_iframeContent', window.parent.document).css({
               'position': 'relative'
@@ -161,13 +173,13 @@
           });
         }, 100);
       });
-      
-      $(document).on('click', '.piklist-list-table-export-button', function() 
+
+      $(document).on('click', '.piklist-list-table-export-button', function()
       {
-        setTimeout(function() 
+        setTimeout(function()
         {
           var TB_WIDTH = 870,
-            TB_HEIGHT = 800; 
+            TB_HEIGHT = 800;
 
           $('#TB_window').css({
             marginLeft: '-' + parseInt((TB_WIDTH / 2), 10) + 'px'
@@ -175,7 +187,7 @@
             ,height: TB_HEIGHT + 'px'
             ,marginTop: '-' + parseInt((TB_HEIGHT / 2), 10) + 'px'
           });
-          
+
           $('#TB_ajaxContent').css({
             height: TB_HEIGHT - 45 + 'px'
           })
@@ -186,22 +198,27 @@
     meta_boxes: function()
     {
       $('.piklist-meta-box-collapse:not(.piklist-meta-box-lock)').addClass('closed');
-      
+
       $('.piklist-meta-box-lock')
         .addClass('stuffbox')
         .css('box-shadow', 'none')
-        .find('div.handlediv')
+        .find('.handlediv')
           .hide()
           .next('h3.hndle')
             .removeClass('hndle')
             .css('cursor', 'default');
-      
+
       $('.piklist-meta-box-lock').each(function()
       {
         if (!$(this).hasClass('hide-if-js'))
         {
           $(this).show();
         }
+
+        $(this)
+          .find('h2.hndle')
+          .removeClass('hndle')
+          .addClass('piklist-meta-box-hndle');
       });
 
       $('.piklist-meta-box > .inside').each(function()
@@ -214,72 +231,127 @@
         }
       });
     },
-    
+
     post_name: function()
     {
       var form = $('body.wp-admin.post-php form#post:first');
-      
+
       if (form.length > 0)
       {
         var slug = form.find(':input#post_name');
-        
+
         if (slug.length <= 0)
         {
           form.append($('<input type="hidden" name="post_name" id="post_name">'));
         }
       }
     },
-    
+
     post_submit_meta_box: function()
     {
-      $('.save-post-status', '#post-status-select').click(function(event) 
+      if (typeof piklist.post != 'undefined' && typeof piklist.post_statuses != 'undefined' && $('div#submitdiv.postbox').length > 0)
       {
-        event.preventDefault();
-        
-        var status = $('#post_status').val(),
-          text = $('#post_status option:selected').text();
-        
-        if (status != 'draft')
+        var post_status = $('select#post_status'),
+          draft = false,
+          publish = false,
+          default_status;
+
+        $(':input#original_post_status').val(piklist.post.post_status);
+
+        post_status.children().each(function()
         {
-          $('#save-post').val('Save');
-          
-          $('#hidden_post_status, #original_publish').val(text);
-          $('#publish').val('Update');
-        }
-        
-        $('#post-status-display').text(text);
-      });
-      
-      $('#publish', '#major-publishing-actions').click(function()
-      {
-        if ($('#post-status-select').css('display') != 'none')
+          var value = $(this).val();
+
+          if (typeof piklist.post_statuses != 'undefined')
+          {
+            $(this).remove();
+          }
+        });
+
+        for (var status in piklist.post_statuses)
         {
-          $('.save-post-status', '#post-status-select').trigger('click');
+          post_status.append('<option value="' + status + '" ' + (status == piklist.post.post_status ? 'selected="selected"' : '') + '>' + piklist.post_statuses[status].label + '</option>');
+
+          if (status == 'publish')
+          {
+            publish = true;
+          }
+          else if (status == 'draft')
+          {
+            draft = true;
+          }
+
+          if (!default_status)
+          {
+            default_status = piklist.post_statuses[status];
+          }
         }
-        
-        if ($('#post-visibility-select').css('display') != 'none')
+
+        $('span#post-status-display').text(piklist.post.post_status != 'auto-draft' && typeof piklist.post_statuses[piklist.post.post_status] != 'undefined' ? piklist.post_statuses[piklist.post.post_status].label : default_status.label)
+
+        if (!publish)
         {
-          $('.save-post-visibility', '#post-visibility-select').trigger('click');
+          if ($('div#submitdiv.postbox > h3 > span').text() == window.postL10n.publish)
+          {
+            $('div#submitdiv.postbox > h3 > span').text('Update');
+          }
+
+          $(':input#publish')
+            .attr('name', 'save')
+            .val('Update');
+
+          window.postL10n.publish = 'Update';
         }
-      });
+
+        if (!draft)
+        {
+          $(':input#save-post').remove();
+        }
+
+        $('.save-post-status, .cancel-post-status', '#post-status-select').on('click', function(event)
+        {
+          event.preventDefault();
+
+          var status = post_status.val(),
+            text = post_status.find('> option:selected').val();
+
+          if (status != 'draft')
+          {
+            $('#hidden_post_status, #original_publish').val(text);
+          }
+        });
+
+        $('#publish', '#major-publishing-actions').on('click', function()
+        {
+          if ($('#post-status-select').css('display') != 'none')
+          {
+            $('.save-post-status', '#post-status-select').trigger('click');
+          }
+
+          if ($('#post-visibility-select').css('display') != 'none')
+          {
+            $('.save-post-visibility', '#post-visibility-select').trigger('click');
+          }
+        });
+      }
     },
-    
+
     shortcodes: function()
     {
-      $.each(piklist.shortcodes, function(index, shortcode) 
+      $.each(piklist.shortcodes, function(index, shortcode)
       {
         if (wp.mce.views)
         {
           var tag = typeof shortcode.shortcode != 'undefined' ? shortcode.shortcode : shortcode;
-          
+
           wp.mce.views.register(tag, piklist_admin.shortcode(tag));
         }
       });
-      
+
       $(window).on('resize', function()
       {
         var thickbox = $('#TB_iframeContent');
-    
+
         if (thickbox.length > 0 && thickbox.attr('src').indexOf('page=shortcode_editor'))
         {
           var width = Math.round($(window).width() - 60),
@@ -300,11 +372,11 @@
               });
         }
       });
-      
+
       $(document).on('click', '.piklist-shortcode-button', function(event)
       {
-        event.preventDefault(); 
-        
+        event.preventDefault();
+
         var title = $(this).prop('title'),
           editor = typeof parent.tinymce.activeEditor != 'undefined' ? parent.tinymce.activeEditor : false,
           frame_in_frame = window.location != window.parent.location,
@@ -325,7 +397,7 @@
         else if ($(this).hasClass('mce-ico'))
         {
           title = $(this).parents('.mce-btn').attr('aria-label');
-          
+
           attributes[piklist.prefix + 'shortcode_data[name]'] = $(this).parents('.mce-btn').attr('role');
           attributes[piklist.prefix + 'shortcode_data[action]'] = 'insert';
         }
@@ -334,26 +406,39 @@
           attributes[piklist.prefix + 'shortcode_data[name]'] = $(this).data('piklist-shortcode');
           attributes[piklist.prefix + 'shortcode_data[action]'] = 'insert';
         }
-        
+
         if (typeof pagenow != 'undefined' && $.inArray(pagenow, ['post', 'post-new']) > -1)
         {
           attributes[piklist.prefix + 'post[ID]'] = $('#post_ID').val();
         }
-        
+
         attributes[piklist.prefix + '[admin_hide_ui]'] = 'true';
-        
+
         if (content && !frame_in_frame)
         {
           attributes[piklist.prefix + 'shortcode_data[content]'] = content;
         }
-        
+
         attributes['TB_iframe'] = 'true';
-        
+
         tb_show(title, editor_url + '?' + $.param(attributes));
 
         $(window, parent).trigger('resize');
       });
-      
+
+      // Handle auto-select of first only shortcode to allow edit view to function properly
+      $(document).on('beforePreWpautop', function(event)
+      {
+        if (!wp.autosave)
+        {
+          var editor = tinyMCE.activeEditor;
+
+          editor.selection.select(editor.getBody(), true);
+
+          editor.selection.collapse(true);
+        }
+      });
+
       if ($('body.admin_page_shortcode_editor').length > 0)
       {
         if (piklist.validate_check)
@@ -367,7 +452,7 @@
             attribute_length,
             attribute_string = '',
             output = '';
-          
+
           for (var i = 0; i < data.length; i++)
           {
             attribute = data[i].name.replace(piklist.prefix + 'shortcode_data[', '').replace(/[\[\]']+/g, '');
@@ -383,38 +468,35 @@
               shortcode.tag = data[i].value;
             }
           }
-        
+
           data = $(':input[name^="' + piklist.prefix + 'shortcode["]').serializeArray();
 
           for (var i = 0; i < data.length; i++)
           {
             attribute_length = (piklist.prefix + 'shortcode').length + 1;
-            attribute = data[i].name.substr(attribute_length, data[i].name.indexOf(']') - attribute_length); 
-            
-            if (attribute.toLowerCase() == '_index' && data[i].value == -1)
+            attribute = data[i].name.substr(attribute_length, data[i].name.indexOf(']') - attribute_length);
+
+            if (attribute.toLowerCase() != 'id')
             {
-              var editor = typeof parent.tinymce.activeEditor != 'undefined' ? parent.tinymce.activeEditor : false,
-                editor_iframe = $(editor.getDoc()),
-                index = $(editor_iframe.find('*[data-wpview-type="' + shortcode.tag + '"]')).length;
-                
-              attribute_string += attribute + '="' + index + '" ';
-            }
-            else if (attribute.toLowerCase() != 'id')
-            {
-              attribute_string += attribute + '="' + data[i].value + '" ';
+              attribute_string += attribute + '="' + encodeURIComponent(data[i].value) + '" ';
             }
           }
-          
+
           shortcode.attrs = wp.shortcode.attrs(attribute_string);
-          
+
+          if (typeof piklist.shortcodes[shortcode.tag] != 'undefined' && (piklist.shortcodes[shortcode.tag].type == 'closed' || piklist.shortcodes[shortcode.tag].type == 'single'))
+          {
+            shortcode.type = piklist.shortcodes[shortcode.tag].type;
+          }
+
           output = wp.shortcode.string(shortcode);
-          
+
           var _output = $(document).triggerHandler('piklist:shortcode:insert', [output, shortcode]);
           if (typeof _output != 'undefined')
           {
             output = _output;
           }
-          
+
           parent.send_to_editor(output);
 
           // NOTE: In order to make sure nested shortcodes are rendered properly we have to toggle the views
@@ -428,12 +510,12 @@
           $('ul.piklist-shortcodes > .attachment').on('click', function(event)
           {
             $('input[name="' + piklist.prefix + 'shortcode_data[name]"]').val($(this).data('piklist-shortcode'));
-          
+
             var data = $(':input[name^="' + piklist.prefix + 'shortcode_data["]').serializeArray(),
               post_id = typeof pagenow != 'undefined' && $.inArray(pagenow, ['post', 'post-new']) > -1 ? '&' + piklist.prefix + 'post[ID]=' + $('#post_ID').val() : null,
               attributes = {};
-          
-            $.each(data, function(key, value) 
+
+            $.each(data, function(key, value)
             {
               attributes[value['name']] = value['value'];
             });
@@ -443,12 +525,12 @@
         }
       }
     },
-    
+
     shortcode: function(shortcode)
     {
       return {
         template: wp.media.template('piklist-shortcode'),
-        
+
         getContent: function()
         {
           if (piklist.shortcodes[this.shortcode.tag].preview === true)
@@ -502,13 +584,13 @@
                     {
                       head.append($(this).prop('outerHTML'));
                     });
-                    
+
                     body
                       .css('min-height', '100%')
                       .html(response.data.html)
                       .find('a')
                       .attr('target', '_blank');
-                    
+
                     if (MutationObserver)
                     {
                       var observer = new MutationObserver(function()
@@ -518,7 +600,7 @@
                         resize();
                       });
 
-                      observer.observe(preview.contents()[0], {
+                      observer.observe(preview.contents().find('body')[0], {
                         attributes: true,
                         childList: true,
                         subtree: true
@@ -531,7 +613,7 @@
                         setTimeout(resize, i * 700);
                       }
                     }
-                    
+
                     setTimeout(resize, 700);
                   }
                 });
@@ -557,7 +639,7 @@
                 preview.push(this.shortcode.attrs.named[attribute] + ' (' + attribute + ')');
               }
             }
-            
+
             return this.template({
               tag: this.shortcode.tag,
               attributes: this.shortcode.attrs.named,
@@ -567,7 +649,7 @@
               }
             });
           }
-          
+
           return this.template({
             tag: this.shortcode.tag,
             attributes: this.shortcode.attrs.named,
@@ -576,15 +658,15 @@
             }
           });
         },
-        
-        replaceMarkers: function() 
+
+        replaceMarkers: function()
         {
-          this.getMarkers(function(editor, node) 
+          this.getMarkers(function(editor, node)
           {
             var selected = node === editor.selection.getNode(),
               $view_node;
 
-            if (!this.loader && $(node).text() !== this.text) 
+            if (!this.loader && $(node).text() !== this.text)
             {
               editor.dom.setAttrib(node, 'data-wpview-marker', null);
               return;
@@ -597,38 +679,38 @@
                 prev_html = typeof prev_node != 'undefined' && typeof prev_node.html() != 'undefined' ? prev_node.html() : '',
                 next_html = typeof next_node != 'undefined' && typeof next_node.html() != 'undefined' ? next_node.html() : '',
                 tag = typeof prev_node != 'undefined' ? prev_node.prop('tagName') : next_node.prop('tagName');
-              
+
               tag = tag ? tag : 'p';
-                
+
               $view_node = editor.$(
-                '<' + tag + '>' + 
-                  (prev_html + (prev_html != '' && prev_html.substr(prev_html.length - 6) != '&nbsp;' ? '&nbsp;' : '')) + 
-                  '<span class="wpview-wrap wpview-wrap-inline" data-wpview-text="' + this.encodedText + '" data-wpview-type="' + this.type + '">' +
-                    '<span class="wpview-body" contenteditable="false">' +
+                '<' + tag + '>' +
+                  (prev_html + (prev_html != '' && prev_html.substr(prev_html.length - 6) != '&nbsp;' ? '&nbsp;' : '')) +
+                  '<span class="wpview wpview-wrap wpview-wrap-inline" data-wpview-text="' + this.encodedText + '" data-wpview-type="' + this.type + '" contenteditable="false">' +
+                    '<span class="wpview-body">' +
                       '<span class="wpview-content wpview-type-' + this.type + '"></span>' +
                     '</span>' +
-                  '</span>' + 
-                  ((next_html != '' && next_html.substr(0, 6) != '&nbsp;' ? '&nbsp;' : '') + next_html) + 
+                  '</span>' +
+                  ((next_html != '' && next_html.substr(0, 6) != '&nbsp;' ? '&nbsp;' : '') + next_html) +
                 '</' + tag + '>'
               );
-              
+
               editor.$(prev_node).remove();
               editor.$(next_node).remove();
-              
+
               editor.$(node).replaceWith($view_node);
             }
             else
             {
               $view_node = editor.$(
-                '<div class="wpview-wrap" data-wpview-text="' + this.encodedText + '" data-wpview-type="' + this.type + '">' +
+                '<div class="wpview wpview-wrap" data-wpview-text="' + this.encodedText + '" data-wpview-type="' + this.type + '" contenteditable="false">' +
                   '<p class="wpview-selection-before">\u00a0</p>' +
-                  '<div class="wpview-body" contenteditable="false">' +
+                  '<div class="wpview-body">' +
                     '<div class="wpview-content wpview-type-' + this.type + '"></div>' +
                   '</div>' +
                   '<p class="wpview-selection-after">\u00a0</p>' +
                 '</div>'
-              );        
-              
+              );
+
               editor.$(node).replaceWith($view_node);
             }
 
@@ -638,21 +720,21 @@
             }
           });
         },
-        
-        edit: function(string) 
+
+        edit: function(string)
         {
-          if (typeof string === 'object') 
+          if (typeof string === 'object')
           {
             string = decodeURIComponent($(string).data('wpview-text'));
           }
 
           var shortcode = {},
             regex = wp.shortcode.regexp(this.type);
-            
+
           regex.lastIndex = 0;
-          
+
           var match = regex.exec(string);
-          
+
           if (match)
           {
             shortcode = {
@@ -669,14 +751,14 @@
               attributes = {
                 'page': 'shortcode_editor'
               };
-              
+
             if (typeof pagenow != 'undefined' && $.inArray(pagenow, ['post', 'post-new']) > -1)
             {
               attributes[piklist.prefix + 'post[ID]'] = $('#post_ID').val();
             }
 
             attributes[piklist.prefix + '[admin_hide_ui]'] = 'true';
-            
+
             $.each(shortcode.attrs.named, function(key, value)
             {
               attributes[piklist.prefix + 'shortcode[' + key + ']'] = value;
@@ -684,7 +766,7 @@
 
             attributes[piklist.prefix + 'shortcode_data[name]'] = shortcode.tag;
             attributes[piklist.prefix + 'shortcode_data[action]'] = 'update';
-            attributes[piklist.prefix + 'shortcode_data[index]'] = typeof shortcode.attrs.named._index != 'undefined' ? shortcode.attrs.named._index : index < 0 ? false : index;
+            attributes[piklist.prefix + 'shortcode_data[index]'] = index < 0 ? false : index;
 
             if (typeof shortcode.content != 'undefined')
             {
@@ -703,19 +785,19 @@
             }
 
             tb_show('Edit ' + (piklist.shortcodes[this.type].name ? piklist.shortcodes[this.type].name : null), editor_url + '?' + $.param(attributes));
-            
+
             $(window).trigger('resize');
           }
         },
-        
-        indexesOf: function(string, regex) 
+
+        indexesOf: function(string, regex)
         {
           var match,
             indexes = [];
 
           regex = new RegExp(regex);
 
-          while (match = regex.exec(string)) 
+          while (match = regex.exec(string))
           {
             indexes.push(match.index);
           }
@@ -724,18 +806,18 @@
         }
       };
     },
-    
+
     customizer: function()
     {
       if ($('body').hasClass('wp-customizer'))
       {
         $('.widget-tpl').on('click', function()
         {
-          setTimeout(piklist_admin.customizer_widget_setup, 100);        
+          setTimeout(piklist_admin.customizer_widget_setup, 100);
         });
-        
+
         setTimeout(piklist_admin.customizer_widget_setup, 100);
-        
+
         $(document).on('widget-synced', function(event, widget, form)
         {
           if (widget.parent().attr('id').indexOf('customize-control-widget' + piklist.prefix + 'piklist-universal-widget') > -1)
@@ -744,14 +826,14 @@
               widget_inside = widget.find('.widget-inside:first');
 
             widget_inside.css('top', 0);
-            
+
             widget_container
               .css({
                 'visibility': 'hidden',
                 'max-height': '100%'
               })
               .html(form)
-          
+
             widget_container
               .removeData('wptabs')
               .removeData('piklistgroups')
@@ -759,7 +841,7 @@
               .removeData('piklistmediaupload')
               .removeData('piklistaddmore')
               .removeData('piklistfields');
-            
+
             setTimeout(function()
             {
               widget_container
@@ -772,7 +854,7 @@
                   sortable: true
                 })
                 .piklistfields();
-          
+
                 widget_container.css({
                   'visibility': 'visible',
                   'overflow': 'visible'
@@ -782,7 +864,7 @@
         });
       }
     },
-    
+
     customizer_widget_setup: function()
     {
       $('.piklist-universal-widget-select').each(function()
@@ -792,7 +874,7 @@
           .off('change input propertychange');
       });
     },
-    
+
     widgets: function()
     {
       $(document).on('mousedown', '.widget input[name="savewidget"]', function()
@@ -817,7 +899,7 @@
             .removeData('piklistmediaupload')
             .removeData('piklistaddmore')
             .removeData('piklistfields');
-              
+
           setTimeout(function()
           {
             widget_container
@@ -830,14 +912,14 @@
                 sortable: true
               })
               .piklistfields();
-            
+
             if (typeof title != 'undefined')
             {
               widget_title
                 .find('.in-widget-title')
                 .text(':  ' + title);
             }
-            
+
             widget_container
               .css({
                 'height': 'auto',
@@ -845,7 +927,7 @@
               });
           }, 50);
         });
-        
+
         if (typeof tinyMCE != 'undefined')
         {
           tinyMCE.triggerSave();
@@ -859,9 +941,9 @@
           });
         }
       });
-              
+
       piklist_admin.widget_title();
-      
+
       $(document).on('change', '.piklist-universal-widget-select', function(event)
       {
         var widget = $(this).val(),
@@ -874,7 +956,7 @@
           widget_title = $(this).parents('.widget').find('.widget-title h4'),
           widget_description = widget_container.find('.piklist-universal-widget-select-container p'),
           wptab_active = widget_container.data('piklist-wptab-active');
-          
+
         if (widget)
         {
           widget_form
@@ -940,20 +1022,20 @@
           });
         }
       });
-      
+
       $('.wp-tab-bar li a').on('click', function(event)
       {
         var widget_container = $(this).parents('.widget-content:first');
-        
+
         if (widget_container.length > 0)
         {
           widget_container.attr('data-piklist-wptab-active', $(this).text());
         }
       });
-      
+
       piklist_admin.widget_title();
     },
-    
+
     widget_title: function()
     {
       setTimeout(function()
@@ -965,19 +1047,19 @@
             title = $(this).data('widget-title'),
             height = $(this).data('widget-height'),
             width = $(this).data('widget-width');
-        
+
           if (typeof title != 'undefined')
           {
             widget_title
               .find('.in-widget-title')
               .text(':  ' + title);
           }
-        
+
           piklist_admin.widget_dimensions(widget_container, height, width);
         });
       }, 250);
     },
-    
+
     widget_dimensions: function(widget, height, width)
     {
       var container = widget.parents('.widget:first'),
@@ -988,10 +1070,10 @@
       if (inside.is(':visible'))
       {
         toggle.trigger('click');
-        
+
         toggled = true;
       }
-      
+
       widget
         .siblings('input[name="widget-width"]')
         .val(width ? width : 250);
@@ -999,7 +1081,7 @@
       widget
         .siblings('input[name="widget-height"]')
         .val(height ? height : 200);
-      
+
       if ($('body.wp-customizer').length > 0)
       {
         inside
@@ -1010,7 +1092,7 @@
           })
           .attr('style', 'max-width: ' + width + ' !important');
       }
-        
+
       setTimeout(function()
       {
         widget
@@ -1023,66 +1105,55 @@
         }
       }, 250);
     },
-    
+
     list_tables: function()
     {
       $('.piklist-list-table-export-columns')
         .sortable()
         .disableSelection();
-        
+
       $('.piklist-list-table-export-submit').on('click', function(event)
       {
         var form_id = $(this).attr('rel');
-        
+
         tb_remove();
-        
+
         $('#' + form_id).submit();
       });
     }
   };
 
-  
-  
+
+
   /* --------------------------------------------------------------------------------
     WordPress Updates
   -------------------------------------------------------------------------------- */
-  
+
   // NOTE: Allow meta boxes and widgets to have tinymce
   $(document)
     .on('sortstart', '.ui-sortable', function(event, ui)
     {
-      if ($(this).is('.ui-sortable') && (ui.item.hasClass('postbox') || ui.item.hasClass('piklist-field-addmore-wrapper')))
+      if ($(this).is('.ui-sortable') && typeof tinyMCE != 'undefined')
       {
-        $(this).find('.wp-editor-area').each(function()
+        $(this).find('.wp-editor-area.piklist-field-element').each(function()
         {
-          if (typeof switchEditors != 'undefined' && typeof tinyMCE != 'undefined')
-          {
-            var id = $(this).attr('id'),
-              command = tinymce.majorVersion == 3 ? 'mceRemoveControl' : 'mceRemoveEditor';
+          var id = $(this).attr('id'),
+            command = tinymce.majorVersion == 3 ? 'mceRemoveControl' : 'mceRemoveEditor';
 
-            if (typeof switchEditors != 'undefined')
-            {
-              switchEditors.go(id, 'tmce');
-            }
-              
-            tinyMCE.execCommand(command, false, id);
-          }
+          tinyMCE.execCommand(command, false, id);
         });
       }
     })
     .on('sortstop sortreceive', '.ui-sortable', function(event, ui)
     {
-      if ($(this).is('.ui-sortable') && (ui.item.hasClass('postbox') || ui.item.hasClass('piklist-field-addmore-wrapper')))
+      if ($(this).is('.ui-sortable') && typeof tinyMCE != 'undefined')
       {
-        $(this).find('.wp-editor-area').each(function()
+        $(this).find('.wp-editor-area.piklist-field-element').each(function()
         {
-          if (typeof switchEditors != 'undefined' && typeof tinyMCE != 'undefined')
-          {
-            var id = $(this).attr('id'),
-              command = tinymce.majorVersion == 3 ? 'mceAddControl' : 'mceAddEditor';
-              
-            tinyMCE.execCommand(command, false, id);
-          }
+          var id = $(this).attr('id'),
+            command = tinymce.majorVersion == 3 ? 'mceAddControl' : 'mceAddEditor';
+
+          tinyMCE.execCommand(command, false, id);
         });
       }
     });
@@ -1092,13 +1163,13 @@
   /* --------------------------------------------------------------------------------
     WP Tabs - Updates or enhancements to existing WordPress Functionality
   -------------------------------------------------------------------------------- */
-  
+
   var WPTabs = function(element, options)
   {
     this.$element = $(element);
     this._init();
   };
-  
+
   WPTabs.prototype = {
 
     constructor: WPTabs,
@@ -1106,24 +1177,24 @@
     _init: function()
     {
       this.setup();
-      
+
       $('.wp-tab-bar li a').on('click', function(event)
       {
-        event.preventDefault(); 
+        event.preventDefault();
 
         var tab = $(this).closest('li'),
           index = $(this).closest('.wp-tab-bar').children().index(tab),
-          panels = $(this).closest('.wp-tab-bar').nextUntil('.wp-tab-bar', '.wp-tab-panel'); 
+          panels = $(this).closest('.wp-tab-bar').nextUntil('.wp-tab-bar', '.wp-tab-panel');
 
         tab.addClass('wp-tab-active').siblings().removeClass('wp-tab-active');
-        
+
         for (var i = 0; i < panels.length; i++)
         {
-          $(panels[i]).toggle(i == index ? true : false); 
+          $(panels[i]).toggle(i == index ? true : false);
         }
       });
     },
-    
+
     setup: function()
     {
       $('.wp-tab-bar li a').each(function()
@@ -1133,38 +1204,38 @@
         if (!tab.hasClass('wp-tab-active'))
         {
           var index = $(this).closest('.wp-tab-bar').children().index(tab);
-          
+
           $(this).closest('.wp-tab-bar').nextUntil('.wp-tab-bar', '.wp-tab-panel').eq(index).hide();
         }
       });
     }
   };
-  
+
   $.fn.wptabs = function(option)
   {
     var _arguments = Array.apply(null, arguments);
     _arguments.shift();
-  
-    return this.each(function() 
+
+    return this.each(function()
     {
       var $this = $(this),
         data = $this.data('wptabs'),
         options = typeof option === 'object' && option;
 
-      if (!data) 
+      if (!data)
       {
         $this.data('wptabs', (data = new WPTabs(this, $.extend({}, $.fn.wptabs.defaults, options, $(this).data()))));
       }
-  
-      if (typeof option === 'string') 
+
+      if (typeof option === 'string')
       {
         data[option].apply(data, _arguments);
       }
     });
   };
-  
+
   $.fn.wptabs.defaults = {};
-  
+
   $.fn.wptabs.Constructor = WPTabs;
-  
+
 })(jQuery, window, document);

@@ -3,10 +3,12 @@
 Title: Add More Fields: Single Level
 Setting: piklist_demo_fields
 Order: 1
-Tab: Add-More's
+Tab: Add more's
 Sub Tab: Single Level
 Flow: Demo Workflow
 */
+
+
 
   piklist('field', array(
     'type' => 'text'
@@ -23,7 +25,7 @@ Flow: Demo Workflow
     ,'add_more' => true
   ));
 
-    piklist('field', array(
+  piklist('field', array(
     'type' => 'group'
     ,'field' => 'demo_add_more_group_todo' // Including a field at this level saves all data in a serialized array.
     ,'label' => __('Todo\'s (Serialized Group)', 'piklist-demo')
@@ -71,53 +73,6 @@ Flow: Demo Workflow
     )
   ));
  
-  piklist('field', array(
-    'type' => 'group'
-    ,'label' => __('Todo\'s (Group)', 'piklist-demo')
-    ,'description' => __('Saves data as individual meta keys.', 'piklist-demo')
-    ,'add_more' => true
-    ,'fields' => array(
-      array(
-        'type' => 'editor'
-        ,'field' => 'task'
-        ,'label' => __('Task', 'piklist-demo')
-        ,'columns' => 12
-        ,'options' => array(
-          'drag_drop_upload' => true
-          ,'editor_height' => 100
-          ,'media_buttons' => false
-          ,'teeny' => true
-          ,'quicktags' => false
-          ,'tinymce' => array(
-            'autoresize_min_height' => 100
-            ,'toolbar1' => 'bold,italic,bullist,numlist,blockquote,link,unlink,undo,redo'
-            ,'resize' => false
-            ,'wp_autoresize_on' => true
-          )
-        )
-      )
-      ,array(
-        'type' => 'select'
-        ,'field' => 'demo_add_more_todo_user_id'
-        ,'label' => __('Assigned to', 'piklist-demo')
-        ,'columns' => 12
-        ,'choices' => piklist(
-          get_users(
-            array(
-             'orderby' => 'display_name'
-             ,'order' => 'asc'
-            )
-            ,'objects'
-          )
-          ,array(
-            'ID'
-            ,'display_name'
-          )
-        )
-      )
-    )
-  ));
-
   piklist('field', array(
     'type' => 'group'
     ,'field' => 'slides_basic'
@@ -270,8 +225,55 @@ piklist('field', array(
     )
   ));
 
+  piklist('field', array(
+    'type' => 'group'
+    ,'field' => 'demo_add_more_group_list' // Including a "field" for "type => group" saves all data in a serialized array.
+    ,'label' => __('Lots of List Fields (Serialized Group)', 'piklist-demo')
+    ,'description' => __('Saves all data in one serialized array.', 'piklist-demo')
+    ,'add_more' => true
+    ,'fields' => array(
+      array(
+        'type' => 'checkbox'
+        ,'field' => 'checkbox_addmore_list'
+        ,'label' => __('Checkbox', 'piklist-demo')
+        ,'value' => 'third'
+        ,'columns' => 4 // Piklist uses a 12 column grid.
+        ,'choices' => array(
+          'first' => 'First Choice'
+          ,'second' => 'Second Choice'
+          ,'third' => 'Third Choice'
+        )
+      )
+      ,array(
+        'type' => 'select'
+        ,'field' => 'select_addmore_list'
+        ,'label' => __('Select', 'piklist-demo')
+        ,'value' => 'third'
+        ,'columns' => 4 // Piklist uses a 12 column grid
+        ,'choices' => array(
+          'first' => 'First Choice'
+          ,'second' => 'Second Choice'
+          ,'third' => 'Third Choice'
+        )
+      )
+      ,array(
+        'type' => 'radio'
+        ,'field' => 'radio_addmore_list'
+        ,'label' => __('Radio', 'piklist-demo')
+        ,'value' => 'third'
+        ,'columns' => 4 // Piklist uses a 12 column grid
+        ,'choices' => array(
+          'first' => 'First Choice'
+          ,'second' => 'Second Choice'
+          ,'third' => 'Third Choice'
+        )
+      )
+    )
+  ));
 
   
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Settings Section'

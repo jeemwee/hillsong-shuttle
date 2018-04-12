@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Meta
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -24,7 +24,7 @@ class Piklist_Meta
     ,'comment' => array()
     ,'user' => array()
   );
-  
+
   /**
    * @var array The meta that should be cleared from the cache when using the edit screens.
    * @access private
@@ -43,13 +43,19 @@ class Piklist_Meta
       ,'group' => 'comment_meta'
     )
   );
-  
+
   /**
    * @var bool Whether a post revision check was fired.
    * @access private
    */
   private static $wp_save_post_revision_check = false;
- 
+
+  /**
+   * @var array Non Piklist meta-boxes that have already been removed.
+   * @access private
+   */
+  private static $meta_boxes_removed = array();
+
   /**
    * _construct
    * Class constructor.
@@ -77,7 +83,7 @@ class Piklist_Meta
 
     add_filter('piklist_part_process-meta-boxes', array('piklist_meta', 'part_process'), 10, 2);
   }
-  
+
   /**
    * update_meta_box
    * Check if a meta box exists and possible remove it.
@@ -91,13 +97,13 @@ class Piklist_Meta
    * @access public
    * @static
    * @since 1.0
-   */  
+   */
   public static function update_meta_box($screen, $id, $action = 'search')
   {
     global $wp_meta_boxes;
-    
+
     $check = false;
-    
+
     if (empty($screen))
     {
       $screen = get_current_screen();
@@ -106,9 +112,9 @@ class Piklist_Meta
     {
       $screen = convert_to_screen($screen);
     }
-    
+
     $page = $screen->id;
-      
+
     foreach (array('normal', 'advanced', 'side') as $context)
     {
       foreach (array('high', 'sorted', 'core', 'default', 'low') as $priority)
@@ -122,20 +128,20 @@ class Piklist_Meta
               if ($action == 'remove')
               {
                 unset($wp_meta_boxes[$page][$context][$priority][$order]);
-                
+
                 return $order;
               }
-              
+
               $check = true;
             }
           }
         }
       }
     }
-    
+
     return $check;
   }
-  
+
   /**
    * register_meta_boxes
    * Register the meta-boxes parts folder
@@ -161,14 +167,15 @@ class Piklist_Meta
               ,'status' => 'Status'
               ,'new' => 'New'
               ,'id' => 'ID'
+              ,'slug' => 'Slug'
               ,'template' => 'Template'
               ,'meta_box' => 'Meta Box'
               ,'post_format' => 'Post Format'
             );
-    
+
     piklist::process_parts('meta-boxes', $data, array('piklist_meta', 'register_meta_boxes_callback'));
   }
-  
+
   /**
    * clear_screen
    * Clear the screen of all meta-boxes
@@ -183,11 +190,11 @@ class Piklist_Meta
 
     $workflow = piklist_workflow::get('workflow');
 
-	  if ($workflow && !empty($workflow['data']['clear']) && $workflow['data']['clear'] == true && piklist_admin::is_post())
+    if ($workflow && !empty($workflow['data']['clear']) && $workflow['data']['clear'] == true && piklist_admin::is_post())
     {
       remove_post_type_support('post', 'editor');
       remove_post_type_support('post', 'title');
-      
+
       foreach (array('normal', 'advanced', 'side') as $context)
       {
         foreach (array('high', 'sorted', 'core', 'default', 'low') as $priority)
@@ -206,7 +213,7 @@ class Piklist_Meta
       }
     }
   }
-  
+
   /**
    * register_meta_boxes_callback
    * Process the resulting parts from the registration of the meta-boxes part folder.
@@ -236,10 +243,10 @@ class Piklist_Meta
       {
         $original_order = self::update_meta_box($type, $data['extend'], 'remove');
       }
-      elseif (!$data['extend'] || ($data['extend'] && self::update_meta_box($type, $id)))
+      elseif (!$data['extend'] || ($data['extend'] && self::update_meta_box($type, $id)) || ($data['extend'] && in_array($data['extend'], self::$meta_boxes_removed)))
       {
         $original_order = self::update_meta_box($type, $id, 'remove');
-        
+
         add_meta_box(
           $id
           ,$title
@@ -254,7 +261,7 @@ class Piklist_Meta
             ,'data' => $data
           )
         );
-        
+
         if ($data['meta_box'] === false)
         {
           add_filter("postbox_classes_{$type}_{$id}", array('piklist_meta', 'lock_meta_boxes'));
@@ -266,13 +273,13 @@ class Piklist_Meta
           {
             add_filter("postbox_classes_{$type}_{$id}", array('piklist_meta', 'lock_meta_boxes'));
           }
-          
+
           if ($data['collapse'] === true)
           {
             add_filter("postbox_classes_{$type}_{$id}", array('piklist_meta', 'collapse_meta_boxes'));
           }
         }
-    
+
         if ($title == $id)
         {
           add_filter("postbox_classes_{$type}_{$id}", array('piklist_meta', 'no_title_meta_boxes'));
@@ -297,16 +304,16 @@ class Piklist_Meta
   public static function meta_box($post, $meta_box)
   {
     do_action('piklist_pre_render_meta_box', $post, $meta_box);
-    
+
     if ($meta_box['args']['render'])
     {
       foreach ($meta_box['args']['render'] as $render)
       {
-        if (is_array($render))
+        if (is_array($render) && array_key_exists('callback', $render) && array_key_exists('args', $render))
         {
           call_user_func($render['callback'], $post, $render['args']);
         }
-        else
+        elseif (!is_array($render))
         {
           piklist::render($render, array(
             'data' => $meta_box['args']['data']
@@ -314,10 +321,10 @@ class Piklist_Meta
         }
       }
     }
-    
+
     do_action('piklist_post_render_meta_box', $post, $meta_box);
   }
-  
+
   /**
    * part_process
    * Process part addition.
@@ -346,35 +353,33 @@ class Piklist_Meta
             {
               if (is_array($part['render']) && !in_array($meta_box, $part['render']))
               {
-                if ($part['id'] != 'submitdiv')
+                if ($part['data']['extend_method'] == 'before')
                 {
-                  if ($part['data']['extend_method'] == 'before')
-                  {
-                    array_push($part['render'], $meta_box);
-                  }
-                  elseif ($part['data']['extend_method'] == 'after')
-                  {
-                    array_unshift($part['render'], $meta_box);
-                  }
+                  array_push($part['render'], $meta_box);
                 }
-                else if (empty($part['data']['title']))
+                elseif ($part['data']['extend_method'] == 'after')
                 {
-                  $part['data']['title'] = $meta_box['title'];
+                  array_unshift($part['render'], $meta_box);
                 }
+
+                if (empty($part['data']['context']))
+                {
+                  $part['data']['context'] = $context;
+                }
+
+                if (empty($part['data']['priority']))
+                {
+                  $part['data']['priority'] = $priority;
+                }
+
+                unset($wp_meta_boxes[$current_screen->id][$context][$priority][$meta_box['id']]);
+
+                array_push(self::$meta_boxes_removed, $meta_box['id']);
               }
             }
           }
         }
       }
-    }
-
-    if ($part['id'] == 'submitdiv' && empty($part['data']['post_type']))
-    {
-      $post_types = get_post_types(array(
-        '_builtin' => false
-      ));
-
-      $part['data']['post_type'] = array_values($post_types);
     }
 
     return $part;
@@ -424,7 +429,7 @@ class Piklist_Meta
   public static function lock_meta_boxes($classes)
   {
     array_push($classes, 'piklist-meta-box-lock');
-    
+
     return $classes;
   }
 
@@ -443,7 +448,7 @@ class Piklist_Meta
   public static function no_title_meta_boxes($classes)
   {
     array_push($classes, 'piklist-meta-box-no-title');
-    
+
     return $classes;
   }
 
@@ -462,7 +467,7 @@ class Piklist_Meta
   public static function no_meta_boxes($classes)
   {
     array_push($classes, 'piklist-meta-box-none');
-    
+
     return $classes;
   }
 
@@ -481,7 +486,7 @@ class Piklist_Meta
   public static function default_classes($classes)
   {
     array_push($classes, 'piklist-meta-box');
-    
+
     return $classes;
   }
 
@@ -500,7 +505,7 @@ class Piklist_Meta
   public static function collapse_meta_boxes($classes)
   {
     array_push($classes, 'piklist-meta-box-collapse');
-    
+
     return $classes;
   }
 
@@ -523,7 +528,7 @@ class Piklist_Meta
       ,'post_title' => ucwords(str_replace(array('-', '_'), ' ', $post->post_type)) . ' ' . $id
     ));
   }
-  
+
   /**
    * meta_grouped
    * Find all meta keys that are grouped
@@ -535,12 +540,14 @@ class Piklist_Meta
   public static function meta_grouped()
   {
     global $wpdb;
-    
+
     foreach (self::$grouped_meta_keys as $meta_type => $meta_keys)
     {
-      if (($meta = self::get_meta_properties($meta_type)) !== false)
+      if (false !== ($meta = self::get_meta_properties($meta_type)) && !empty($meta->table))
       {
-        $group_keys = $wpdb->get_col("SELECT DISTINCT meta_key FROM $meta->table WHERE meta_key LIKE '\_\\" . piklist::$prefix . "%'");
+        $prefix = trim($wpdb->prepare('%s', piklist::$prefix), "'");
+        $group_keys = $wpdb->get_col("SELECT DISTINCT meta_key FROM $meta->table WHERE meta_key LIKE '\\_\\{$prefix}%'");
+
         foreach ($group_keys as $group_key)
         {
           $key = $wpdb->get_var($wpdb->prepare("SELECT DISTINCT meta_key FROM $meta->table WHERE meta_key = %s", str_replace('_' . piklist::$prefix, '', $group_key)));
@@ -553,7 +560,7 @@ class Piklist_Meta
       }
     }
   }
-  
+
   /**
    * meta_reset
    * Reset the cache for meta based on the admin edit page.
@@ -568,11 +575,11 @@ class Piklist_Meta
 
     /**
      * piklist_reset_meta_admin_pages
-     * 
+     *
      * @since 1.0
      */
     self::$reset_meta = apply_filters('piklist_reset_meta_admin_pages', self::$reset_meta);
-    
+
     if (in_array($pagenow, self::$reset_meta))
     {
       foreach (self::$reset_meta as $page => $data)
@@ -580,13 +587,13 @@ class Piklist_Meta
         if (isset($_REQUEST[$data['id']]))
         {
           wp_cache_replace($_REQUEST[$data['id']], false, $data['group']);
-          
+
           break;
         }
       }
     }
   }
-  
+
   /**
    * meta_sort
    * Sort meta by meta_id when pulling it using standard functions to maintain sort orders from fields.
@@ -599,24 +606,30 @@ class Piklist_Meta
    * @static
    * @since 1.0
    */
-  public static function meta_sort($query) 
+  public static function meta_sort($query)
   {
     global $wpdb;
-    
+
     if (stristr($query, ', meta_key, meta_value FROM'))
     {
+      $default_meta_tables_sort = array(
+        'post_id' => $wpdb->postmeta
+        ,'comment_id' => $wpdb->commentmeta
+        ,'user_id' => $wpdb->usermeta
+      );
+
       /**
        * piklist_meta_tables_sort
        * The tables to re-order when running meta queries
        *
        * @since 1.0
        */
-      $meta_tables = array_merge(apply_filters('piklist_meta_tables_sort', array()), array(
-        'post_id' => $wpdb->postmeta
-        ,'comment_id' => $wpdb->commentmeta
-        ,'user_id' => $wpdb->usermeta
-      ));
-      
+      $piklist_meta_tables_sort = apply_filters('piklist_meta_tables_sort', array());
+
+      // Do not allow filter to overwrite $default_meta_tables_sort
+      $meta_tables = array_merge($piklist_meta_tables_sort, $default_meta_tables_sort);
+
+
       foreach ($meta_tables as $id => $meta_table)
       {
         if (stristr($query, "SELECT {$id}, meta_key, meta_value FROM {$meta_table} WHERE {$id} IN") && !stristr($query, ' ORDER BY '))
@@ -625,10 +638,10 @@ class Piklist_Meta
         }
       }
     }
-    
+
     return $query;
   }
-  
+
   /**
    * get_post_meta
    * Filter the meta call to preserve an group structures that are not stored as serialized arrays.
@@ -648,7 +661,7 @@ class Piklist_Meta
   {
     return self::get_metadata($value, 'post', $object_id, $meta_key, $single);
   }
-  
+
   /**
    * get_user_meta
    * Filter the meta call to preserve an group structures that are not stored as serialized arrays.
@@ -668,7 +681,7 @@ class Piklist_Meta
   {
     return self::get_metadata($value, 'user', $object_id, $meta_key, $single);
   }
-  
+
   /**
    * get_term_meta
    * Filter the meta call to preserve an group structures that are not stored as serialized arrays.
@@ -688,7 +701,7 @@ class Piklist_Meta
   {
     return self::get_metadata($value, 'term', $object_id, $meta_key, $single);
   }
-  
+
   /**
    * get_metadata
    * Get the meta data update if it is grouped.
@@ -710,13 +723,13 @@ class Piklist_Meta
     global $wpdb;
 
     $meta_key = '_' . piklist::$prefix . $meta_key;
-    
+
     if (is_array(self::$grouped_meta_keys[$meta_type]) && in_array($meta_key, self::$grouped_meta_keys[$meta_type]))
     {
       remove_filter('get_post_metadata', array('piklist_meta', 'get_post_meta'), 100);
       remove_filter('get_user_metadata', array('piklist_meta', 'get_user_meta'), 100);
       remove_filter('get_term_metadata', array('piklist_meta', 'get_term_meta'), 100);
-      
+
       if (($meta_ids = get_metadata($meta_type, $object_id, $meta_key)) && ($meta = self::get_meta_properties($meta_type)) !== false)
       {
         foreach ($meta_ids as &$group)
@@ -725,19 +738,21 @@ class Piklist_Meta
           {
             $meta_id = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM $meta->table WHERE $meta->id = %d", $meta_id));
           }
+          unset($meta_id);
         }
-        
+        unset($group);
+
         $value = $meta_ids;
       }
-      
+
       add_filter('get_post_metadata', array('piklist_meta', 'get_post_meta'), 100, 4);
       add_filter('get_user_metadata', array('piklist_meta', 'get_user_meta'), 100, 4);
       add_filter('get_term_metadata', array('piklist_meta', 'get_term_meta'), 100, 4);
     }
-    
+
     return $value;
   }
-  
+
   /**
    * get_meta_properties
    * Get all the properties needed to updated a meta table.
@@ -753,53 +768,53 @@ class Piklist_Meta
   public static function get_meta_properties($meta_type)
   {
     global $wpdb;
-    
+
     switch ($meta_type)
     {
       case 'post':
-        
+
         $meta = array(
           'table' => $wpdb->postmeta
           ,'id' => 'meta_id'
           ,'object_id' => 'post_id'
         );
-      
+
       break;
 
-      case 'term': 
-      
+      case 'term':
+
         $meta = !isset($wpdb->termmeta) ? false : array(
           'table' => $wpdb->termmeta
           ,'id' => 'meta_id'
           ,'object_id' => 'term_id'
         );
-      
+
       break;
 
       case 'user':
-        
+
         $meta = array(
           'table' => $wpdb->usermeta
           ,'id' => 'umeta_id'
           ,'object_id' => 'user_id'
         );
-      
+
       break;
-      
+
       case 'comment':
-        
+
         $meta = array(
           'table' => $wpdb->commentmeta
           ,'id' => 'meta_id'
           ,'object_id' => 'comment_id'
         );
-      
+
       break;
     }
-    
-    return (object) $meta;
+
+    return is_array($meta) ? (object) $meta : false;
   }
-  
+
   /**
    * wp_save_post_revision_check_for_changes
    * Set a flag if a check for changes was fired.
@@ -817,7 +832,7 @@ class Piklist_Meta
   public static function wp_save_post_revision_check_for_changes($check_for_changes, $last_revision, $post)
   {
     self::$wp_save_post_revision_check = true;
-    
+
     return $check_for_changes;
   }
 
@@ -860,15 +875,15 @@ class Piklist_Meta
   public static function wp_save_post_revision_post_meta_serialize($value, $object_id, $meta_key, $single)
   {
     global $wpdb;
-    
+
     if (self::$wp_save_post_revision_check)
     {
       $meta = self::get_meta_properties('post');
-        
+
       $value = $wpdb->get_var($wpdb->prepare("SELECT meta_value FROM $meta->table WHERE $meta->object_id = %d AND meta_key = %s", $object_id, $meta_key));
       $value = maybe_serialize($value);
     }
-    
+
     return $value;
   }
 }

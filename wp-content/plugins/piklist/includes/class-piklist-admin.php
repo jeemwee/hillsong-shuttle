@@ -8,17 +8,17 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Admin
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
 class Piklist_Admin
 {
   /**
-   * @var bool Whether a theme is Piklist dependent.
+   * @var bool Stores all dependent plugins and theme
    * @access public
    */
-  public static $piklist_dependent = false;
+  public static $piklist_dependent = array();
 
   /**
    * @var bool Whether Piklist is network activated.
@@ -74,6 +74,8 @@ class Piklist_Admin
    */
   public static function _construct()
   {
+    global $pagenow;
+
     if (is_admin())
     {
       add_action('init', array('piklist_admin', 'init'));
@@ -81,7 +83,7 @@ class Piklist_Admin
 
     add_action('admin_head', array('piklist_admin', 'admin_head'));
     add_action('wp_head', array('piklist_admin', 'admin_head'));
-    add_action('admin_menu', array('piklist_admin', 'register_admin_pages'), -1);
+    add_action('admin_menu', array('piklist_admin', 'register_admin_pages'));
     add_action('redirect_post_location', array('piklist_admin', 'redirect_post_location'), 10, 2);
 
     add_filter('admin_footer_text', array('piklist_admin', 'admin_footer_text'));
@@ -91,7 +93,14 @@ class Piklist_Admin
     add_filter('plugin_action_links_piklist/piklist.php', array('piklist_admin', 'plugin_action_links'));
     add_filter('plugin_row_meta', array('piklist_admin', 'plugin_row_meta'), 10, 2);
 
-    add_filter('piklist_assets_footer', array('piklist_admin', 'assets'), 100);
+    if ($pagenow == 'customize.php')
+    {
+      add_filter('piklist_assets_footer', array('piklist_admin', 'assets'), 100);
+    }
+    else
+    {
+      add_filter('piklist_assets', array('piklist_admin', 'assets'), 100);
+    }
   }
 
   /**
@@ -339,6 +348,8 @@ class Piklist_Admin
 
         add_filter("option_page_capability_{$page['setting']}", array('piklist_admin', 'option_page_capability'));
       }
+
+      $page['capability'] = isset($page['capability']) ? $page['capability'] : 'manage_options';
 
       if (isset($page['sub_menu']))
       {
@@ -593,7 +604,7 @@ class Piklist_Admin
   {
     unset($actions['deactivate']);
 
-    array_unshift($actions, sprintf(__('%1$sDependent plugins or theme are active.%2$s', 'piklist'),'<div style="color:#a00">', piklist_admin::replace_deactivation_link_help() .'</div>') . (is_network_admin() ? __('Network Deactivate', 'piklist') :  __('Deactivate', 'piklist')));
+    array_unshift($actions, sprintf(__('%1$sDependent plugins or theme are active.%2$s', 'piklist'), '<div style="color:#a00"><a href="admin.php?page=piklist">', piklist_admin::replace_deactivation_link_help() .'</a></div>') . (is_network_admin() ? __('Network Deactivate', 'piklist') :  __('Deactivate', 'piklist')));
 
     return $actions;
   }
@@ -827,7 +838,10 @@ class Piklist_Admin
 
       $class = 'Piklist_Update_' . str_replace('.', '_', $version);
 
-      $execute = new $class();
+      if (class_exists($class))
+      {
+        $execute = new $class();
+      }
     }
   }
 
@@ -907,7 +921,7 @@ class Piklist_Admin
 
     if (in_array($pagenow, array('edit-tags.php', 'term.php')))
     {
-	    return !empty($_REQUEST['tag_ID']) ? $_REQUEST['tag_ID'] : 'new';
+      return !empty($_REQUEST['tag_ID']) ? $_REQUEST['tag_ID'] : 'new';
     }
 
     return false;
@@ -1002,7 +1016,7 @@ class Piklist_Admin
 /**
    * responsive_admin
    * Checks for WP 3.8 or above, which has a responsive admin.
-	 * TODO: deprecate
+     * TODO: depreciate
    *
    * @return bool Whether admin is responsive or not.
    *
@@ -1021,5 +1035,4 @@ class Piklist_Admin
       return false;
     }
   }
-
 }

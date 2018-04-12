@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Revision
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -26,10 +26,10 @@ class Piklist_Revision
   {
     add_action('save_post', array('piklist_revision', 'save_post'), -1, 2);
     add_action('wp_restore_post_revision', array('piklist_revision', 'restore_revision'), 10, 2);
-  
-    add_filter('_wp_post_revision_fields', array('piklist_revision', '_wp_post_revision_fields'));
+
+    add_filter('_wp_post_revision_fields', array('piklist_revision', 'wp_post_revision_fields'));
   }
-  
+
   /**
    * save_post
    * Make sure metadata is saved on post revisions
@@ -41,20 +41,29 @@ class Piklist_Revision
    * @static
    * @since 1.0
    */
-  public static function save_post($post_id, $post) 
+  public static function save_post($post_id, $post)
   {
-    if (($parent_id = wp_is_post_revision($post_id)) && !wp_is_post_autosave($post_id)) 
+    global $wpdb;
+
+    if (($parent_id = wp_is_post_revision($post_id)) && !wp_is_post_autosave($post_id))
     {
-      if ($meta = piklist('post_custom', $parent_id))
-      {
-        foreach ($meta as $key => $value)
-        {
-          add_metadata('post', $post_id, $key, maybe_serialize($value));
-        }
-      }
+      // build list of meta keys not to duplicate
+      $black_listed_keys = apply_filters('piklist_revision_meta_blacklist', array(
+        '_edit_lock',
+        '_edit_last'
+      ), $post);
+
+      // generate placeholders
+      $blacklist_placeholders = implode(',', array_fill(0, count($black_listed_keys), '%s'));
+
+      $sql = "INSERT INTO $wpdb->postmeta (post_id, meta_key, meta_value) SELECT %d, meta_key, meta_value FROM $wpdb->postmeta WHERE post_id = %d AND meta_key NOT IN ($blacklist_placeholders)";
+
+      $arguments = array_merge(array($sql, $post_id, $parent_id), $black_listed_keys);
+
+      $wpdb->get_results(call_user_func_array(array($wpdb, 'prepare'), $arguments));
     }
   }
-  
+
   /**
    * restore_revision
    * Restores a revision to the current post.
@@ -68,17 +77,21 @@ class Piklist_Revision
    */
   public static function restore_revision($post_id, $revision_id)
   {
-    if ($meta = piklist('post_custom', $revision_id))
+    global $wpdb;
+
+    $meta = $wpdb->get_results($wpdb->prepare("SELECT * FROM $wpdb->postmeta WHERE post_id = %d", $revision_id));
+
+    if ($meta)
     {
-      foreach ($meta as $key => $value)
+      foreach ($meta as $object)
       {
-        update_metadata('post', $post_id, $key, $value);   
+        update_metadata('post', $post_id, $object->meta_key, $object->meta_value);
       }
     }
-  } 
-  
+  }
+
   /**
-   * _wp_post_revision_fields
+   * wp_post_revision_fields
    * Adds a custom field for metadata to the revision ui.
    *
    * @param array $fields The current set of fields for the ui.
@@ -89,30 +102,32 @@ class Piklist_Revision
    * @static
    * @since 1.0
    */
-  public static function _wp_post_revision_fields($fields) 
+  public static function wp_post_revision_fields($fields)
   {
     global $wpdb;
-    
-    $meta_keys = $wpdb->get_col("SELECT DISTINCT meta_key FROM $wpdb->postmeta"); //" WHERE meta_key NOT LIKE '\_%';");
-    
+
+    $meta_keys = $wpdb->get_col("SELECT DISTINCT meta_key FROM $wpdb->postmeta");
+
     foreach ($meta_keys as $meta_key)
     {
       $label = ucwords(str_replace(array('-', '_'), ' ', $meta_key));
-      
+
       $fields[$meta_key] = __($label, 'piklist');
-    
-      add_filter('_wp_post_revision_field_' . $meta_key, array('piklist_revision', '_wp_post_revision_field'), 10, 4);
+
+      add_filter('_wp_post_revision_field_' . $meta_key, array('piklist_revision', 'wp_post_revision_field'), 10, 4);
     }
 
     return $fields;
   }
 
   /**
-   * _wp_post_revision_field_meta
+   * wp_post_revision_field
    * Render the metadata in the field.
    *
    * @param int $value The field value.
    * @param int $field The field to retrieve.
+   * @param int $revision The revistion to compare against.
+   * @param string $type Type of comparison.
    *
    * @return mixed The metadata.
    *
@@ -120,56 +135,8 @@ class Piklist_Revision
    * @static
    * @since 1.0
    */
-  public static function _wp_post_revision_field($value, $field, $revision, $type) 
+  public static function wp_post_revision_field($value, $field, $revision, $type)
   {
-    $meta = maybe_unserialize(get_metadata('post', $revision->ID, $field, true));
-
-    return is_array($meta) ? self::array_to_list($meta) : $meta;
-  }
-  
-  /**
-   * array_to_list
-   * Converts object into a more readable format for the post revision table.
-   *
-   * @param array $array The field to display.
-   * @param int $depth The current depth of the transversal.
-   *
-   * @return string The formatted array.
-   *
-   * @access public
-   * @static
-   * @since 1.0
-   */
-  public static function array_to_list(&$array, $depth = 0) 
-  {
-    $output = '';
-    
-    foreach ($array as $key => $value) 
-    { 
-      $output .= "\n"; 
-    
-      for ($i = 0; $i < $depth; $i++)
-      {
-        $output .= '-'; 
-      }
-    
-      if ($depth > 0)
-      {
-        $output .= '> '; 
-      }
-
-      $output .= $key .' => '; 
-
-      if (is_array($value)) 
-      { 
-        $output .= self::array_to_list($value, $depth + 1); 
-      } 
-      else
-      {    
-        $output .= $array[$key] . "\n"; 
-      } 
-    } 
-
-    return $output;
+    return get_metadata('post', $revision->ID, $field, true);
   }
 }

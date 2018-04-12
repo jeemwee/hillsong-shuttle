@@ -94,7 +94,7 @@ if (!class_exists('Piklist_Update_0_9_9'))
     }
 
     public function ajax()
-    {
+    {      
       if (!isset($_REQUEST['method']) || !isset($_REQUEST['nonce']) || !wp_verify_nonce((string) $_REQUEST['nonce'], $this->slug))
       {
         wp_send_json_error();

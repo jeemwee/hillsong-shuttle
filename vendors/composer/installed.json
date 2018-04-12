@@ -145,16 +145,16 @@
     },
     {
         "name": "wpackagist-plugin/piklist",
-        "version": "0.9.9.13",
-        "version_normalized": "0.9.9.13",
+        "version": "0.9.9.15",
+        "version_normalized": "0.9.9.15",
         "source": {
             "type": "svn",
             "url": "https://plugins.svn.wordpress.org/piklist/",
-            "reference": "tags/0.9.9.13"
+            "reference": "tags/0.9.9.15"
         },
         "dist": {
             "type": "zip",
-            "url": "https://downloads.wordpress.org/plugin/piklist.0.9.9.13.zip",
+            "url": "https://downloads.wordpress.org/plugin/piklist.0.9.9.15.zip",
             "reference": null,
             "shasum": null
         },

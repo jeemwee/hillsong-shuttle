@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  WordPress
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -245,7 +245,7 @@ class Piklist_WordPress
           'key' => self::$capabilities_meta_key
           ,'value' => '"' . $role . '"'
           ,'compare' => 'like'
-      ));
+        ));
       }
 
       $query->query_vars['role'] = null;
@@ -274,7 +274,7 @@ class Piklist_WordPress
    */
   public static function get_sql_for_query($query, $depth = 0, $parent_relation = 'AND')
   {
-    global $wpdb, $wp_query;
+    global $wpdb, $wp_query, $wp_version;
 
     $sql_chunks = array(
       'join' => array()
@@ -397,7 +397,7 @@ class Piklist_WordPress
             }
             elseif ('LIKE' == $meta_compare || 'NOT LIKE' == $meta_compare)
             {
-              $meta_value = '%' . (function_exists('like_escape') ? like_escape($meta_value) : $wpdb->esc_like($meta_value)) . '%';
+              $meta_value = '%' . (version_compare($wp_version, '4.0', '<') && function_exists('like_escape') ? like_escape($meta_value) : $wpdb->esc_like($meta_value)) . '%';
               $meta_value_string = '%s';
             }
             else
@@ -487,7 +487,7 @@ class Piklist_WordPress
 
     self::$primary_ids = array_unique(self::$primary_ids);
 
-    $sql_chunks['where'][] = " " . self::$primary_table . "." . self::$primary_id_column . " IN (" . (!empty(self::$primary_ids) ? implode(',', array_map('intval', self::$primary_ids)) : '-1') . ") ";
+    $sql_chunks['where'][] = !empty(self::$primary_ids) ? " " . self::$primary_table . "." . self::$primary_id_column . " IN (" . implode(',', array_map('intval', self::$primary_ids)) . ") " : ' 0';
 
     if (!empty($sql_chunks['where']))
     {
@@ -513,7 +513,7 @@ class Piklist_WordPress
         }
       }
     }
-
+    
     return $sql;
   }
 

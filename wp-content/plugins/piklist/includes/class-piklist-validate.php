@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Validate
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -57,6 +57,12 @@ class Piklist_Validate
   private static $sanitization_rules = array();
 
   /**
+   * @var array All fields data that has passed through validation.
+   * @access private
+   */
+  private static $processed = array();
+
+  /**
    * _construct
    * Class constructor.
    *
@@ -72,6 +78,7 @@ class Piklist_Validate
     add_action('piklist_notices', array('piklist_validate', 'notices'));
     add_action('wp_ajax_piklist_validate', array('piklist_validate', 'ajax'));
     add_action('wp_ajax_nopriv_piklist_validate', array('piklist_validate', 'ajax'));
+    add_action('wp_loaded', array('piklist_validate', 'set_data'), 99999);
 
     add_filter('piklist_assets_localize', array('piklist_validate', 'assets_localize'));
     add_filter('wp_redirect', array('piklist_validate', 'wp_redirect'), 10, 2);
@@ -206,7 +213,7 @@ class Piklist_Validate
 
               self::$form_submission = $check['fields_data'];
 
-              foreach (self::$form_submission as $scope => $fields)
+              foreach (self::$form_submission as $fields)
               {
                 foreach ($fields as $field)
                 {
@@ -253,7 +260,7 @@ class Piklist_Validate
 
     $errors = array();
 
-    foreach (self::$form_submission as $scope => $fields)
+    foreach (self::$form_submission as $fields)
     {
       foreach ($fields as $field)
       {
@@ -329,11 +336,26 @@ class Piklist_Validate
 
     $clones = array();
 
+    // Sort scopes so they are executed in proper order
+    ksort($fields_data);
+    $field_data_keys_append = array();
+    $field_data_keys = array_keys($fields_data);
+    foreach ($field_data_keys as $index => $field_data_key)
+    {
+      if (in_array($field_data_key, array('taxonomy', 'post_meta', 'user_meta', 'term_meta', 'comment_meta')))
+      {
+        unset($field_data_keys[$index]);
+        array_push($field_data_keys_append, $field_data_key);
+      }
+    }
+    $field_data_keys = array_merge($field_data_keys, $field_data_keys_append);
+    $fields_data = array_merge(array_flip($field_data_keys), $fields_data);
+
     foreach ($fields_data as $type => &$fields)
     {
       foreach ($fields as &$field)
       {
-        if (!is_null($stored_data))
+        if (!is_null($stored_data)) // Widgets, Settings API
         {
           if ($field['prefix'] && isset($stored_data[piklist::$prefix . $field['scope']]))
           {
@@ -348,9 +370,13 @@ class Piklist_Validate
             $request_data = $stored_data;
           }
         }
-        else
+        else // Everything else, pulled from request object
         {
-          if ($field['scope'] && isset($_REQUEST[piklist::$prefix . $field['scope']]))
+          if (($scope_prefix = piklist_form::is_related_field($field)) != false && isset($_REQUEST[piklist::$prefix . $scope_prefix]))
+          {
+            $request_data = $_REQUEST[piklist::$prefix . $scope_prefix];
+          }
+          elseif ($field['scope'] && isset($_REQUEST[piklist::$prefix . $field['scope']]))
           {
             $request_data = $_REQUEST[piklist::$prefix . $field['scope']];
           }
@@ -366,8 +392,6 @@ class Piklist_Validate
 
         if ($request_data && $field['field'] && $field['type'] != 'html')
         {
-          $field['errors'] = false;
-
           if (!in_array($field['field'], $clones))
           {
             if (isset($request_data[$field['field']]))
@@ -431,10 +455,10 @@ class Piklist_Validate
                 }
                 $original = implode(':', $original);
 
-                if (isset($fields[$original]))
-                {
-                  $clone = $fields[$original];
+                $clone = piklist_form::get_fields_data($fields_data, $field['scope'], $original);
 
+                if ($clone)
+                {
                   $path = array_reverse(explode(':', $path));
                   for ($i = 0; $i < count($path); $i++)
                   {
@@ -447,23 +471,32 @@ class Piklist_Validate
                   }
                   $path = array_reverse($path);
 
-                  $clone['field'] = $field_name;
-                  $clone['id'] = piklist_form::get_field_id($clone);
-                  $clone['name'] = piklist_form::get_field_name($clone);
-                  $clone['request_value'] = piklist::array_path_get($field['request_value'], $path);
-
                   $original_path = explode(':', $original);
-                  $group = array_shift($original_path);
-                  $fields[$original]['request_value'] = piklist::array_path_get($field['request_value'], $original_path);
 
-                  $position = array_search($original, array_keys($fields)) + 1;
-                  $fields = array_slice($fields, 0, $position, true) + array($field_name => $clone) + array_slice($fields, $position, count($fields) - 1, true);
+                  $exists = piklist_form::get_fields_data($fields_data, $field['scope'], $field_name);
+
+                  if ($exists)
+                  {
+                    $fields_data = piklist_form::update_fields_data($fields_data, $exists, null, 'request_value', piklist::array_path_get($field['request_value'], $path));
+                  }
+                  else
+                  {
+                    $clone['field'] = $field_name;
+                    $clone['id'] = piklist_form::get_field_id($clone);
+                    $clone['name'] = piklist_form::get_field_name($clone);
+                    $clone['request_value'] = piklist::array_path_get($field['request_value'], $path);
+
+                    array_push($fields_data[$field['scope']], $clone);
+                  }
 
                   array_push($clones, $field_name);
                 }
               }
             }
           }
+
+          // Assume no errors
+          $field['errors'] = false;
 
           // Strip Slashes
           $field['request_value'] = stripslashes_deep($field['request_value']);
@@ -490,7 +523,14 @@ class Piklist_Validate
                   $path = explode(':', $field['field']);
                   $group = array_shift($path);
 
-                  piklist::array_path_set($fields[$group]['request_value'], $path, $field['request_value']);
+                  $group_field = piklist_form::get_fields_data($fields_data, $field['scope'], $group);
+
+                  if (piklist::array_path_get($group_field['request_value'], $path))
+                  {
+                    piklist::array_path_set($group_field['request_value'], $path, $field['request_value']);
+                  }
+
+                  piklist_form::update_fields_data($fields_data, $group_field, null, 'request_value', $group_field['request_value']);
                 }
               }
             }
@@ -528,11 +568,21 @@ class Piklist_Validate
           }
         }
       }
+      unset($field);
     }
+    unset($fields);
 
     self::$checked = true;
 
-    self::set_data($fields_id, $fields_data);
+    self::$processed = array(
+      'fields_id' => $fields_id
+      ,'fields_data' => $fields_data
+    );
+
+    if (piklist_admin::is_widget() || piklist_admin::is_setting())
+    {
+      self::set_data();
+    }
 
     return array(
       'valid' => self::$valid
@@ -575,6 +625,8 @@ class Piklist_Validate
    */
   private static function required_value($field)
   {
+    $message = is_string($field['required']) ? $field['required'] : __('is a required field.', 'piklist');
+
     if ($field['type'] == 'file' && isset($_FILES[piklist::$prefix . $field['scope']]['name'][$field['field']]))
     {
       $index = 0;
@@ -583,7 +635,7 @@ class Piklist_Validate
       {
         if ($error != 0)
         {
-          $field = self::add_error($field, $index, __('is a required field.', 'piklist'));
+          $field = self::add_error($field, $index, $message);
         }
 
         $index++;
@@ -599,7 +651,7 @@ class Piklist_Validate
 
         if (empty($required))
         {
-          $field = self::add_error($field, $index, __('is a required field.', 'piklist'));
+          $field = self::add_error($field, $index, $message);
         }
 
         $index++;
@@ -607,7 +659,7 @@ class Piklist_Validate
     }
     elseif (!$field['request_value'])
     {
-      $field = self::add_error($field, 0, __('is a required field.', 'piklist'));
+      $field = self::add_error($field, 0, $message);
     }
 
     return $field;
@@ -743,17 +795,17 @@ class Piklist_Validate
    *
    * @return array The field object.
    *
-   * @access private
+   * @access public
    * @static
    * @since 1.0
    */
-  private static function add_error($field, $index, $message)
+  public static function add_error($field, $index, $message)
   {
     self::$valid = false;
 
     $field['valid'] = false;
 
-    $name = $field['label'] ? $field['label'] : (isset($field['attributes']['placeholder']) ? $field['attributes']['placeholder'] : __(ucwords($field['type'])));
+    $name = $field['label'] ? $field['label'] : (isset($field['attributes']['placeholder']) ? $field['attributes']['placeholder'] : __($field['field']));
 
     if (!is_array($field['errors']))
     {
@@ -766,9 +818,14 @@ class Piklist_Validate
       $field['errors'][$index] = array();
     }
 
-    $name = $field['label'] ? $field['label'] : (isset($field['attributes']['placeholder']) ? $field['attributes']['placeholder'] : __(ucwords($field['type'])));
+    $name = $field['label'] ? $field['label'] : (isset($field['attributes']['placeholder']) ? $field['attributes']['placeholder'] : __($field['field']));
 
     array_push($field['errors'][$index], '<strong>' . $name . '</strong>' . "&nbsp;" . $message);
+
+    if (!empty(self::$processed) && isset(self::$processed['fields_data'][$field['scope']]) && isset(self::$processed['fields_data'][$field['scope']][$field['field']]))
+    {
+      self::$processed['fields_data'] = self::update_fields_data(self::$processed['fields_data'], $field, null, 'errors', $field['errors']);
+    }
 
     return $field;
   }
@@ -777,22 +834,19 @@ class Piklist_Validate
    * set_data
    * Save the request version of the fields object as a transient.
    *
-   * @param string $fields_id The fields id.
-   * @param array $fields_data Collection of fields.
-   *
-   * @access private
+   * @access public
    * @static
    * @since 1.0
    */
-  private static function set_data($fields_id, $fields_data)
+  public static function set_data()
   {
     if (!self::$valid)
     {
-      self::$id = substr(md5($fields_id), 0, 10);
+      self::$id = substr(md5(self::$processed['fields_id']), 0, 10);
 
-      $set = set_transient(piklist::$prefix . 'validation_' . self::$id, $fields_data);
+      $set = set_transient(piklist::$prefix . 'validation_' . self::$id, self::$processed['fields_data']);
 
-      self::$form_submission = $fields_data;
+      self::$form_submission = self::$processed['fields_data'];
     }
   }
 
@@ -845,14 +899,12 @@ class Piklist_Validate
    */
   public static function get_errors($field)
   {
-    $errors = false;
-
-    if (array_key_exists($field['scope'], self::$form_submission) && array_key_exists($field['field'], self::$form_submission[$field['scope']]))
+    if (null !== ($submission = piklist_form::get_fields_data(self::$form_submission, $field['scope'], $field['field'], piklist_form::is_related_field($field))))
     {
-      $errors = self::$form_submission[$field['scope']][$field['field']]['errors'];
+      return isset($submission['errors'][$field['index']]) ? $submission['errors'][$field['index']] : false;
     }
 
-    return $errors;
+    return false;
   }
 
   /**
@@ -869,14 +921,12 @@ class Piklist_Validate
    */
   public static function get_request_value($field)
   {
-    $value = $field['value'];
-
-    if (array_key_exists($field['scope'], self::$form_submission) && array_key_exists($field['field'], self::$form_submission[$field['scope']]))
+    if (null !== ($submission = piklist_form::get_fields_data(self::$form_submission, $field['scope'], $field['field'], piklist_form::is_related_field($field))))
     {
-      $value = self::$form_submission[$field['scope']][$field['field']]['request_value'];
+      return isset($submission['request_value'][$field['index']]) ? $submission['request_value'] : false;
     }
 
-    return $value;
+    return $field['value'];
   }
 
 
@@ -1274,9 +1324,7 @@ class Piklist_Validate
    */
   public static function validate_username_exists($index, $value, $options, $field, $fields)
   {
-    global $current_user;
-
-	  wp_get_current_user();
+    $current_user = wp_get_current_user();
 
     if ($current_user->user_login == $value)
     {
@@ -1313,16 +1361,19 @@ class Piklist_Validate
     if (isset($options['field']))
     {
       $scope = is_array($options['field']) && isset($options['field']['scope']) ? $options['field']['scope'] : $field['scope'];
+      $group = is_array($options['field']) && isset($options['field']['group']) ? $options['field']['group'] : $field['field'];
 
       if (isset($options['field']) && isset($fields[$scope][$options['field']]))
       {
-        if (isset($fields[$scope][$options['field']]['request_value'][$index]) && $fields[$scope][$options['field']]['request_value'][$index] === $value)
+        $match_field = piklist_form::get_fields_data($fields, $scope, $group);
+
+        if (isset($match_field['request_value'][$index]) && $match_field['request_value'][$index] === $value)
         {
           return true;
         }
         else
         {
-          return sprintf(__('must match <strong>%s</strong>', 'piklist'), isset($fields[$scope][$options['field']]['label']) ? $fields[$scope][$options['field']]['label'] : $fields[$scope][$options['field']]['field'], $value);
+          return sprintf(__('must match <strong>%s</strong>', 'piklist'), isset($match_field['label']) ? $match_field['label'] : $match_field['field'], $value);
         }
       }
     }

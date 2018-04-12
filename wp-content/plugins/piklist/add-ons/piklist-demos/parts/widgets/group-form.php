@@ -57,8 +57,8 @@
     'type' => 'group'
     ,'field' => 'address_group_add_more'
     ,'add_more' => true
-    ,'label' => __('Address (Grouped/Add-More)', 'piklist-demo')
-    ,'description' => __('A grouped field using Add-More.', 'piklist-demo')
+    ,'label' => __('Address (Grouped/Add more)', 'piklist-demo')
+    ,'description' => __('A grouped field using add more.', 'piklist-demo')
     ,'fields' => array(
       array(
         'type' => 'text'
@@ -97,7 +97,7 @@
   piklist('field', array(
     'type' => 'group'
     ,'field' => 'editor_test_one'
-    ,'label' => __('Editor test 1 with Addmore', 'piklist-demo')
+    ,'label' => __('Editor test 1 with add more', 'piklist-demo')
     ,'add_more' => true
     ,'description' => __('A grouped/addmore field test with Editor.', 'piklist-demo')
     ,'fields' => array(
@@ -138,7 +138,7 @@
   piklist('field', array(
     'type' => 'group'
     ,'field' => 'editor_test_two'
-    ,'label' => __('Editor test 2 with Addmore', 'piklist-demo')
+    ,'label' => __('Editor test 2 with add more', 'piklist-demo')
     ,'add_more' => true
     ,'description' => __('A grouped/addmore field test with Editor.', 'piklist-demo')
     ,'fields' => array(
@@ -177,6 +177,8 @@
     )
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Widget'

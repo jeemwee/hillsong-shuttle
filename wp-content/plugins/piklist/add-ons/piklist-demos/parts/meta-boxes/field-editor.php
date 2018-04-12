@@ -40,7 +40,7 @@ Sub Tab: Editor
     ,'field' => 'post_content_add_more'
     ,'label' => __('Post Content Add More', 'piklist-demo')
     ,'add_more' => true
-    ,'description' => __('This is the teeny editor used in an add-more repeater field.', 'piklist-demo')
+    ,'description' => __('This is the teeny editor used in an add more repeater field.', 'piklist-demo')
     ,'value' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
     ,'options' => array(
       'media_buttons' => false
@@ -54,6 +54,8 @@ Sub Tab: Editor
     )
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

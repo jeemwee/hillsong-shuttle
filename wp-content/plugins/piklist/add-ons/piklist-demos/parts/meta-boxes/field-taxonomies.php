@@ -18,7 +18,7 @@ Flow: Demo Workflow
 <?php
 
   piklist('field', array(
-    'type' => 'radio'
+    'type' => 'checkbox'
     ,'scope' => 'taxonomy'
     ,'field' => 'piklist_demo_type'
     ,'label' => __('Demo Types', 'piklist-demo')
@@ -34,6 +34,8 @@ Flow: Demo Workflow
     )
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

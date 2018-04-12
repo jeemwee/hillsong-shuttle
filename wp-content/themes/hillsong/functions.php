@@ -83,9 +83,7 @@ add_action( 'after_setup_theme', 'wp_bootstrap_starter_setup' );
 function wp_bootstrap_starter_scripts() {
 	// load bootstrap css
 	wp_enqueue_style( 'hillsong-bootstrap-css', get_template_directory_uri() . '/inc/assets/css/bootstrap.min.css' );
-	// load bootstrap css
-	// load AItheme styles
-	// load WP Bootstrap Starter styles
+
 	wp_enqueue_style( 'hillsong-style', get_template_directory_uri() .'/css/style.css' );
   wp_enqueue_style( 'hillsong-montserrat-opensans-font', '//fonts.googleapis.com/css?family=Montserrat|Open+Sans:300,300i,400,400i,600,600i,700,800' );
 
@@ -94,6 +92,8 @@ function wp_bootstrap_starter_scripts() {
     // Internet Explorer HTML5 support
     wp_enqueue_script( 'html5hiv',get_template_directory_uri().'/inc/assets/js/html5.js', array(), '3.7.0', false );
     wp_script_add_data( 'html5hiv', 'conditional', 'lt IE 9' );
+
+		wp_enqueue_script('hillsong-jquery', get_template_directory_uri() . '/js/functions.js', array() );
 
 	// load bootstrap js
     wp_enqueue_script('hillsong-fontawesome', get_template_directory_uri() . '/inc/assets/js/fontawesome/fontawesome-all.min.js', array() );
@@ -157,21 +157,4 @@ if ( ! class_exists( 'wp_bootstrap_navwalker' )) {
 * Falidate date
 *
 **/
-function validateDate($date) {
-    $format = 'Y-m-d h:i A'; // Eg : 2014-09-24 10:19 PM
-    $dateTime = DateTime::createFromFormat($format, $date);
-		print_r($format);
-		print_r($dateTime);
-
-    if ($dateTime instanceof DateTime && $dateTime->format('Y-m-d h:i A') == $date) {
-        return $dateTime->getTimestamp();
-    }
-
-    return false;
-}
-function isValidDateTimeString($str_dt, $str_dateformat, $str_timezone) {
-  $date = DateTime::createFromFormat($str_dateformat, $str_dt, new DateTimeZone($str_timezone));
-	print_r($date);
-	echo 'dit is de date';
-  return $date && DateTime::getLastErrors()["warning_count"] == 0 && DateTime::getLastErrors()["error_count"] == 0;
-}
+show_admin_bar(false);

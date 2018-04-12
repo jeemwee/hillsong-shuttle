@@ -2,7 +2,7 @@
 /*
 Title: Add More Fields: Three Levels
 Order: 1
-Tab: Add-More's
+Tab: Add more's
 Sub Tab: Three Levels
 Flow: Demo Workflow
 */
@@ -37,9 +37,9 @@ piklist('field', array(
             ,'columns' => 12
             ,'list' => false // Make checkboxes appear horizontally
             ,'choices' => array(
-            	'dairy_free' => 'Dairy Free'
-            	,'gluten_free' => 'Gluten Free'
-            	,'nut_free' => 'Nut Free'
+              'dairy_free' => 'Dairy Free'
+              ,'gluten_free' => 'Gluten Free'
+              ,'nut_free' => 'Nut Free'
             )
           )
           ,array(
@@ -99,13 +99,13 @@ piklist('field', array(
             ,'label' => __('Due', 'piklist-demo')
             ,'columns' => 4
           )
-					,array(
-					  'type' => 'textarea'
-					  ,'field' => 'task_description'
-					  ,'label' => __('Description', 'piklist-demo')
-					  ,'columns' => 12
-					)
-					,array(
+          ,array(
+            'type' => 'textarea'
+            ,'field' => 'task_description'
+            ,'label' => __('Description', 'piklist-demo')
+            ,'columns' => 12
+          )
+          ,array(
             'type' => 'checkbox'
             ,'field' => 'authorized_roles'
             ,'label' => __('Authorized Roles', 'piklist-demo')
@@ -127,9 +127,9 @@ piklist('field', array(
               )
               ,array(
                 'type' => 'datepicker'
-								,'field' => 'sub_task_due'
-								,'label' => __('Due', 'piklist-demo')
-								,'columns' => 4
+                ,'field' => 'sub_task_due'
+                ,'label' => __('Due', 'piklist-demo')
+                ,'columns' => 4
               )
             )
           )
@@ -138,6 +138,8 @@ piklist('field', array(
     )
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'User Section'

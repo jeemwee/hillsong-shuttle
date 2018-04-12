@@ -1,5 +1,5 @@
 <?php
-/*
+/*  
 Title: Post Submit
 Method: post
 Message: Data saved in Piklist Demos, under the Validation tab.
@@ -10,14 +10,14 @@ Logged in: true
  * Piklist forms automatically generate a shortcode:
  *
  * If your form is in a PLUGIN (i.e. wp-content/plugins/my-plugin/parts/forms/my-form.php)
- *
+ * 
  * Use [piklist_form form="my-form" add_on="my-plugin"]
  *
  * If your form is in a THEME (i.e. wp-content/themes/my-theme/piklist/parts/forms/my-form.php)
  * Use [piklist_form form="my-form" add_on="theme"]
  */
 
-/**
+/** 
  * The shortcode for this form is:
  * [piklist_form form="new-post-with-validation" add_on="piklist-demos"]
  */
@@ -41,7 +41,6 @@ Logged in: true
     ,'scope' => 'post' // post_title is in the wp_posts table, so scope is: post
     ,'field' => 'post_title'
     ,'label' => __('Title', 'piklist-demo')
-		,'help' => 'enter post title'
     ,'attributes' => array(
       'wrapper_class' => 'post_title'
       ,'style' => 'width: 100%'
@@ -74,8 +73,27 @@ Logged in: true
   //   ,'field' => 'post_status'
   //   ,'value' => 'pending'
   // ));
-  //
+  // 
 
+
+  piklist('field', array(
+    'type' => 'checkbox'
+    ,'scope' => 'taxonomy'
+    ,'field' => 'piklist_demo_type'
+    ,'label' => __('Demo Types', 'piklist-demo')
+    ,'description' => sprintf(__('Terms will appear when they are added to %1$s the Demo taxonomy %2$s.','piklist-demo'), '<a href="' . network_admin_url() . 'edit-tags.php?taxonomy=piklist_demo_type&post_type=piklist_demo">', '</a>')
+    ,'choices' => piklist(
+      get_terms('piklist_demo_type', array(
+        'hide_empty' => false
+      ))
+      ,array(
+        'term_id'
+        ,'name'
+      )
+    )
+  ));
+
+  
   piklist('field', array(
     'type' => 'text'
     ,'scope' => 'post_meta' // scope needs to be set on EVERY field for front-end forms.
@@ -265,8 +283,8 @@ Logged in: true
     ,'scope' => 'post_meta' // scope needs to be set on EVERY field for front-end forms.
     ,'field' => 'validate_group_add_more_limit'
     ,'add_more' => true
-    ,'label' => __('Grouped/Add-More with Limit', 'piklist-demo')
-    ,'description' => __('No more than two add-mores are allowed', 'piklist-demo')
+    ,'label' => __('Grouped/Add more with Limit', 'piklist-demo')
+    ,'description' => __('No more than two add mores are allowed', 'piklist-demo')
     ,'attributes' => array(
       'wrapper_class' => 'validate_group_add_more_limit'
     )

@@ -24,6 +24,7 @@ Sub Tab: Advanced
       'scope' => 'post'
     )
     ,'add_more'=> true
+    ,'sortable'=> false
     ,'fields' => array(
       array(
         'type' => 'text'
@@ -47,7 +48,7 @@ Sub Tab: Advanced
       )
     )
   ));
-
+  
   // Display related posts
   $related = get_posts(array(
     'post_type' => 'post'
@@ -68,7 +69,7 @@ Sub Tab: Advanced
       <?php endforeach; ?>
    </ol>
 
-    <hr />
+   <hr />
 
 <?php 
   endif;
@@ -125,10 +126,36 @@ Sub Tab: Advanced
 <?php 
   endif;
   
+  // Display related users
+  $related = get_comments(array(
+    'order' => 'DESC'
+    ,'comment_belongs' => $post->ID
+    ,'comment_relate' => 'post'
+  ));
+
+  if ($related): 
+?>
+
+    <h4><?php _e('Related Comments', 'piklist-demo');?></h4>
+
+    <?php foreach ($related as $related_comment): ?>
+      
+      <?php echo wpautop($related_comment->comment_content); ?>
+      
+      <p>
+        <small><?php echo $related_comment->comment_date; ?></small>
+      </p>
+    
+    <?php endforeach; ?>
+
+<?php 
+  endif;
+  
   piklist('field', array(
     'type' => 'group'
     ,'scope' => 'comment'
     ,'label' => 'Notes'
+    ,'new' => true
     ,'relate' => array(
       'scope' => 'post'
     )
@@ -149,33 +176,8 @@ Sub Tab: Advanced
     )
   ));
   
-  // Display related users
-  $related = get_comments(array(
-    'order' => 'DESC'
-    ,'comment_belongs' => $post->ID
-    ,'comment_relate' => 'post'
-  ));
-
-  if ($related): 
-?>
-
-    <h4><?php _e('Related Comment IDs', 'piklist-demo');?></h4>
-
-    <p>
-      <?php _e('See the code in the file for the query example.'); ?>
-    </p>
-    
-    <ol>
-      <?php foreach ($related as $related_comment): ?>
-        <li><?php _e($related_comment->comment_ID); ?></li>
-      <?php endforeach; ?>
-    </ol>
-
-    <hr />
-
-<?php 
-  endif;
-
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

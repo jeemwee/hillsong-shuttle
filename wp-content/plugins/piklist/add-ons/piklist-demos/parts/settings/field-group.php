@@ -65,8 +65,8 @@ Flow: Demo Workflow
     'type' => 'group'
     ,'field' => 'address_group_add_more'
     ,'add_more' => true
-    ,'label' => __('Address (Grouped/Add-More)', 'piklist-demo')
-    ,'description' => __('A grouped field using Add-More.', 'piklist-demo')
+    ,'label' => __('Address (Grouped/Add more)', 'piklist-demo')
+    ,'description' => __('A grouped field using add more.', 'piklist-demo')
     ,'fields' => array(
       array(
         'type' => 'text'
@@ -102,6 +102,8 @@ Flow: Demo Workflow
     )
   ));
   
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Settings Section'

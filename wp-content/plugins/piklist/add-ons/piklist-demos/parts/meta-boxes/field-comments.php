@@ -2,11 +2,12 @@
 /*
 Title: Comments
 Post Type: piklist_demo
-Order: 30
+Order: 35
 Priority: default
 Context: side
 Collapse: true
 Flow: Demo Workflow
+Tab: All
 */
 ?>
 
@@ -50,11 +51,11 @@ Flow: Demo Workflow
     <div class="piklist-label-container"></div>
 
       <div class="piklist-field">
-        
+
         <?php foreach ($comments as $comment): ?>
 
           <div style="padding: 5px 10px 5px 10px;">
-            
+
             <p>
 
               <small>
@@ -82,6 +83,8 @@ Flow: Demo Workflow
 
 <?php
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

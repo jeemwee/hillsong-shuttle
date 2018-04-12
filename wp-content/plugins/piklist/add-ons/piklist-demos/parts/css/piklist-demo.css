@@ -7,7 +7,7 @@
   .piklist-demo-help-source {
     clear: both;
   }
-    
+
     .inside .piklist-demo-help-source {
       width: 100%;
       padding: 0 12px 1px 12px;
@@ -15,26 +15,26 @@
       background: #fafafa;
       margin: 12px 0 -12px -12px;
     }
-  
+
     .piklist-demo-help-source code {
       max-width: 100%;
     }
 
   .piklist-demo-highlight {
     background: #ffffff;
-    border-left: 4px solid #666666;
+    border-left: 4px solid #ffc733;
     box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.1);
     margin: 15px 0 10px 0;
     padding: 10px 12px;
     clear: both;
   }
-  
+
     .piklist-demo-highlight:after {
       content: '';
       display: table;
       clear: both;
     }
-    
+
     .piklist-demo-highlight h3 {
       padding: 0 !important;
       margin: 0 !important;
@@ -59,9 +59,11 @@
       -moz-box-shadow: none;
       box-shadow: none;
     }
-    
+
       .inside .piklist-demo-highlight:first-child {
-        margin: -7px 0 12px -12px;
+        margin: 0 0 12px -12px;
+        top: -7px;
+        position: relative;
       }
 
     .piklist-meta-box-none .piklist-demo-highlight {
@@ -73,20 +75,20 @@
     margin: 10px 0;
     overflow: auto;
   }
-  
+
     pre.piklist-demo-pre {
     }
 
-    * html .piklist-demo-pre  { 
+    * html .piklist-demo-pre  {
       padding-bottom: 10px;
       overflow: visible;
       overflow-x: auto;
     }
-    
+
   .piklist-demo-field-value {
     display: block;
   }
-  
+
   body .wp-filter .button {
     margin-top: 12px;
   }

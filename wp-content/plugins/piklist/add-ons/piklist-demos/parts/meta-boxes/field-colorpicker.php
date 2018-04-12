@@ -3,8 +3,8 @@
 Title: ColorPicker Fields
 Post Type: piklist_demo
 Order: 60
-Collapse: true
-Tab: Basic
+Tab: Common
+Sub Tab: Basic
 Flow: Demo Workflow
 */
 ?>
@@ -14,7 +14,7 @@ Flow: Demo Workflow
 </p>
 
 <?php
-    
+
   piklist('field', array(
     'type' => 'colorpicker'
     ,'field' => 'color'
@@ -28,12 +28,14 @@ Flow: Demo Workflow
     'type' => 'colorpicker'
     ,'add_more' => true
     ,'field' => 'color_add_more'
-    ,'label' => __('Color Picker', 'piklist-demo')
+    ,'label' => __('Color Picker add more', 'piklist-demo')
     ,'on_post_status' => array(
       'value' => 'lock'
     )
   ));
-  
+
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

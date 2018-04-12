@@ -1,6 +1,7 @@
 <?php
 /*  
 Title: Editors
+Description: A Standalone Piklist Demo Widget
 Class: custom-class-1 custom-class-2
 Width: 720
 */

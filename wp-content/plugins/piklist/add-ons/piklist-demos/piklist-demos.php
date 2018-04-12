@@ -2,7 +2,7 @@
 /*
 Plugin Name: Piklist Demos
 Plugin URI: https://piklist.com
-Description: Creates a Demo post type, Taxonomy, Settings Page, User fields, Dashbaord widget, Help tabs and Widget, with Field Examples.
+Description: Creates a Demo post type, Taxonomy, Settings Page, User fields, Dashboard widget, Help tabs and Widget, with Field Examples.
 Version: 0.3
 Author: Piklist
 Author URI: https://piklist.com/
@@ -77,7 +77,7 @@ Domain Path: /languages
 
     return $post_types;
   }
-  
+
   add_filter('piklist_taxonomies', 'piklist_demo_taxonomies');
   function piklist_demo_taxonomies($taxonomies)
   {
@@ -131,7 +131,6 @@ Domain Path: /languages
       ,'menu_slug' => 'piklist_demo_fields'
       ,'setting' => 'piklist_demo_fields'
       ,'menu_icon' => piklist('url', 'piklist') . '/parts/img/piklist-icon.png'
-      ,'page_icon' => piklist('url', 'piklist') . '/parts/img/piklist-page-icon-32.png'
       ,'default_tab' => 'Basic'
       // ,'layout' => 'meta-boxes' // NOTE: Uncomment this to use the meta box layout on this settings page!
       ,'save_text' => 'Save Demo Settings'
@@ -144,12 +143,20 @@ Domain Path: /languages
       ,'capability' => 'manage_options'
       ,'menu_slug' => 'piklist_demo_options'
       ,'menu_icon' => piklist('url', 'piklist') . '/parts/img/piklist-icon.png'
-      ,'page_icon' => piklist('url', 'piklist') . '/parts/img/piklist-page-icon-32.png'
     );
-    
+
+    $pages[] = array(
+      'page_title' => __('Bulk Create')
+      ,'menu_title' => __('Bulk Create', 'piklist-demo')
+      ,'sub_menu' => 'edit.php?post_type=piklist_demo'
+      ,'capability' => 'create_posts'
+      ,'menu_slug' => 'piklist_demo_bulk_create'
+      ,'menu_icon' => piklist('url', 'piklist') . '/parts/img/piklist-icon.png'
+    );
+
     return $pages;
   }
-  
+
   add_filter('piklist_field_templates', 'piklist_demo_field_templates');
   function piklist_demo_field_templates($templates)
   {
@@ -238,7 +245,7 @@ Domain Path: /languages
 
     return $assets;
   }
-  
+
   function piklist_demo_get_states()
   {
     return   $states = array(
@@ -295,9 +302,13 @@ Domain Path: /languages
       ,'WY' => 'WY'
     );
   }
-  
+
+
+  /**
+   * Show the "Get value" link after data is saved in Piklist Demos
+   */
   $piklist_demo_thickbox_loaded = false;
-  
+
   add_filter('piklist_pre_render_field', 'piklist_demo_pre_render_field', 10, 2);
   function piklist_demo_pre_render_field($field)
   {
@@ -317,7 +328,7 @@ Domain Path: /languages
 
     $codes = $values = array();
 
-    if ($field['type'] != 'html')
+    if ($field['type'] != 'html' && !$field['relate'])
     {
       switch ($field['scope'])
       {
@@ -325,12 +336,12 @@ Domain Path: /languages
         case 'user_meta':
         case 'term_meta':
         case 'comment_meta':
-        
+
           // Only show this if data is saved.
           if ($field['object_id'])
           {
             $type = str_replace('_meta', '', $field['scope']);
-          
+
             if (!$field['group_field'])
             {
               if ($field['type'] == 'group')
@@ -338,14 +349,14 @@ Domain Path: /languages
                 if ($field['field'])
                 {
                   $unique = true;
-               
+
                   array_push($codes, '$value = get_' . $type . '_meta(' . $field['object_id'] . ', \'' . $field['field'] . '\', ' . ($unique ? 'true' : 'false') . ');');
-                  array_push($values, get_metadata($type, $field['object_id'], $field['field'], $unique)); 
+                  array_push($values, get_metadata($type, $field['object_id'], $field['field'], $unique));
                 }
                 else
                 {
                   $unique = !$field['add_more'];
-                
+
                   foreach ($field['fields'] as $column)
                   {
                     array_push($codes, '$value = get_' . $type . '_meta(' . $field['object_id'] . ', \'' . $column['field'] . '\', ' . ($unique ? 'true' : 'false') . ');');
@@ -356,7 +367,7 @@ Domain Path: /languages
               elseif (empty($field['conditions']))
               {
                 $unique = !$field['add_more'];
-                
+
                 if (!$unique && $field['type'] == 'radio')
                 {
                   $unique = true;
@@ -365,15 +376,15 @@ Domain Path: /languages
                 {
                   $unique = false;
                 }
-                
+
                 array_push($codes, '$value = get_' . $type . '_meta(' . $field['object_id'] . ', \'' . $field['field'] . '\', ' . ($unique ? 'true' : 'false') . ');');
                 array_push($values, get_metadata($type, $field['object_id'], $field['field'], $unique));
               }
             }
           }
-       
+
         break;
-        
+
         default:
 
           if (!$field['group_field'])
@@ -383,27 +394,27 @@ Domain Path: /languages
               if ($field['field'])
               {
                 array_push($codes, '$option = get_option(' . $field['scope'] . ');<br>  $value = $option[\'' . $field['field'] . '\'];');
-                
+
                 $option = get_option($field['scope']);
 
                 if (isset($option[$field['field']]))
                 {
-                  array_push($values, $option[$field['field']]); 
+                  array_push($values, $option[$field['field']]);
                 }
               }
               else
               {
                 $unique = !$field['add_more'];
-            
+
                 foreach ($field['fields'] as $column)
                 {
                   array_push($codes, '$option = get_option(' . $field['scope'] . ');<br>  $value = $option[\'' . $column['field'] . '\'];');
-                
+
                   $option = get_option($field['scope']);
 
                   if (isset($option[$column['field']]))
                   {
-                    array_push($values, $option[$column['field']]); 
+                    array_push($values, $option[$column['field']]);
                   }
                 }
               }
@@ -411,16 +422,16 @@ Domain Path: /languages
             elseif (empty($field['conditions']))
             {
               array_push($codes, '$option = get_option(' . $field['scope'] . ');<br>  $value = $option[\'' . $field['field'] . '\'];');
-              
+
               $option = get_option($field['scope']);
 
               if (isset($option[$field['field']]))
               {
-                array_push($values, $option[$field['field']]); 
+                array_push($values, $option[$field['field']]);
               }
             }
           }
-        
+
         break;
       }
 
@@ -435,7 +446,7 @@ Domain Path: /languages
                                  ));
       }
     }
-    
+
     return $field;
   }
 
@@ -459,7 +470,7 @@ Domain Path: /languages
       {
         // remove demo_workflow parameter
         $url = preg_replace('/(.*)(?|&)piklist_demo_workflow=[^&]+?(&)(.*)/i', '$1$2$4', $url . '&');
-        
+
         echo '<a href="' . $url . '" class="alignright button button-secondary demo-tab-bar">' . __('View as Tabs', 'piklist-demo') . $help . '</a>';
       }
       else
@@ -467,18 +478,57 @@ Domain Path: /languages
         echo '<a href="' . $url . '&piklist_demo_workflow=bar" class="alignright button button-secondary demo-tab-bar">' . __('View as Bar', 'piklist-demo') . $help . '</a>';
       }
     }
-    
+
   }
   add_action('piklist_workflow_flow_append', 'piklist_demo_workflow_bar');
 
 
-  function piklist_demo_change_workflow_layout($_part)
+  function piklist_demo_change_workflow_layout($part)
   {
     if (isset($_REQUEST['piklist_demo_workflow']) && $_REQUEST['piklist_demo_workflow'] == 'bar')
     {
-      $_part['data']['layout'] = 'bar';
+      $part['data']['layout'] = 'bar';
     }
 
-    return $_part;
+    return $part;
   }
   add_action('piklist_part_process-workflows', 'piklist_demo_change_workflow_layout');
+
+
+
+  function piklist_demo_part_add_meta_boxes($parts)
+  {
+    array_push($parts, array(
+      // Give the part a unique id
+      'id' => 'piklist_demo_part_custom_id'
+      // Associate it with an plugin/add-on
+      ,'add_on' => 'piklist-demos'
+      // Specify its configuration, same as the comment block except keys are slugs
+      ,'data' => array(
+        'title' => 'Custom Meta Box'
+        ,'post_type' => 'piklist_demo'
+        ,'order' => 22
+        ,'tab' => 'Common'
+        ,'sub_tab' => 'Basic'
+        ,'flow' => 'Demo Workflow'
+      )
+      // Where to render the contents, either from a path string or an array with a callback. Pass as many as needed for extensions
+      ,'render' => array(
+        array(
+          'callback' => 'piklist_demo_part_add_meta_boxes_callback'
+          ,'args' => array(
+            'foo' => 'bar'
+          )
+        )
+      )
+    ));
+
+    return $parts;
+  }
+  add_filter('piklist_part_add-meta-boxes', 'piklist_demo_part_add_meta_boxes', 100);
+
+
+  function piklist_demo_part_add_meta_boxes_callback($post, $arguments)
+  {
+    piklist::pre($arguments);
+  }

@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  CPT
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -86,11 +86,18 @@ class Piklist_CPT
     add_action('edit_form_advanced', array('piklist_cpt', 'edit_form'));
     add_action('restrict_manage_posts', array('piklist_cpt', 'taxonomy_filters_list_table'));
     add_action('admin_footer', array('piklist_cpt', 'quick_edit_post_statuses'));
+    add_action('piklist_save_fields', array('piklist_cpt', 'save_fields'));
 
     add_filter('post_row_actions', array('piklist_cpt', 'post_row_actions'), 10, 2);
     add_filter('page_row_actions', array('piklist_cpt', 'post_row_actions'), 10, 2);
     add_filter('wp_insert_post_data', array('piklist_cpt', 'wp_insert_post_data'), 100, 2);
     add_filter('display_post_states', array('piklist_cpt', 'display_post_states'));
+    add_filter('piklist_assets_localize', array('piklist_cpt', 'assets_localize'));
+
+    if (piklist_admin::is_post())
+    {
+      add_filter('is_protected_meta', array('piklist_cpt', 'is_protected_meta'), 100, 3);
+    }
   }
 
   /**
@@ -171,7 +178,7 @@ class Piklist_CPT
         $check[$post_type] = $configuration;
       }
 
-      if (isset($configuration['status']) && !empty($configuration['status']))
+      if (!empty($configuration['status']))
       {
         /**
          * piklist_post_type_statuses
@@ -213,7 +220,7 @@ class Piklist_CPT
         }
       }
 
-      if (isset($configuration['hide_meta_box']) && !empty($configuration['hide_meta_box']) && is_array($configuration['hide_meta_box']))
+      if (!empty($configuration['hide_meta_box']) && is_array($configuration['hide_meta_box']))
       {
         foreach ($configuration['hide_meta_box'] as $meta_box)
         {
@@ -227,12 +234,12 @@ class Piklist_CPT
 
       add_action('admin_head', array('piklist_cpt', 'hide_meta_boxes'), 100);
 
-      if (isset($configuration['title']) && !empty($configuration['title']))
+      if (!empty($configuration['title']))
       {
         add_filter('enter_title_here', array('piklist_cpt', 'enter_title_here'));
       }
 
-      if (isset($configuration['page_icon']) && !empty($configuration['page_icon']))
+      if (!empty($configuration['page_icon']))
       {
         global $pagenow;
 
@@ -245,17 +252,17 @@ class Piklist_CPT
         }
       }
 
-      if (isset($configuration['hide_screen_options']) && !empty($configuration['hide_screen_options']))
+      if (!empty($configuration['hide_screen_options']))
       {
         add_filter('screen_options_show_screen', array('piklist_cpt', 'hide_screen_options'));
       }
 
-      if (isset($configuration['edit_columns']) && !empty($configuration['edit_columns']))
+      if (!empty($configuration['edit_columns']))
       {
         add_filter('manage_edit-' . $post_type . '_columns', array('piklist_cpt', 'manage_edit_columns'));
       }
 
-      if (isset($configuration['admin_body_class']) && !empty($configuration['admin_body_class']))
+      if (!empty($configuration['admin_body_class']))
       {
         add_filter('admin_body_class', array('piklist_cpt', 'admin_body_class'), 10000);
       }
@@ -528,9 +535,9 @@ class Piklist_CPT
     }
 
     $default_statuses = array(
-		'draft' => $wp_post_statuses['draft']
-		,'pending' => $wp_post_statuses['pending']
-		,'private' => $wp_post_statuses['private']
+      'draft' => $wp_post_statuses['draft']
+      ,'pending' => $wp_post_statuses['pending']
+      ,'private' => $wp_post_statuses['private']
     );
 
     if (($post && $post->post_status == 'publish') || (!isset(self::$post_types[$post_type]['status']) || (isset(self::$post_types[$post_type]['status']) && isset(self::$post_types[$post_type]['status']['publish']))))
@@ -765,22 +772,41 @@ class Piklist_CPT
 
     $singular = $obj->labels->singular_name;
 
+    $permalink = get_permalink($post_ID);
+    if (!$permalink) {
+      $permalink = '';
+    }
+
+    $preview_post_link_html = $scheduled_post_link_html = $view_post_link_html = '';
+
+    if (is_post_type_viewable($post_type)) {
+
+      $preview_url = get_preview_post_link($post);
+      $preview_post_link_html = sprintf( ' <a target="_blank" href="%1$s">%2$s</a>', esc_url($preview_url), __('Preview ' . $singular));
+
+      $scheduled_post_link_html = sprintf( ' <a target="_blank" href="%1$s">%2$s</a>', esc_url($permalink), __('Preview ' . $singular));
+
+      $view_post_link_html = sprintf( ' <a href="%1$s">%2$s</a>', esc_url($permalink), __('View '. $singular));
+
+    }
+
+    $scheduled_date = date_i18n(__( 'M j, Y @ H:i'), strtotime($post->post_date));
+
     $messages[$post_type] = array(
-      0 => false
-      ,1 => sprintf(__($singular . ' updated. <a href="%s">View ' . $singular . '</a>'), esc_url(get_permalink($post_ID)))
+      0 => false  // Unused. Messages start at index 1.
+      ,1 => __($singular . ' updated.') . $view_post_link_html
       ,2 => __('Custom field updated.')
       ,3 => __('Custom field deleted.')
-      ,4 => __($singular.' updated.')
+      ,4 => __($singular . ' updated.')
       ,5 => isset($_REQUEST['revision']) ? sprintf( __($singular . ' restored to revision from %s'), wp_post_revision_title((int) $_REQUEST['revision'], false )) : false
-      ,6 => sprintf(__($singular.' published. <a href="%s">View ' . $singular . '</a>'), esc_url(get_permalink($post_ID)))
+      ,6 => __($singular . ' published.') . $view_post_link_html
       ,7 => __('Page saved.')
-      ,8 => sprintf(__($singular . ' submitted. <a target="_blank" href="%s">Preview ' . $singular . '</a>'), esc_url(add_query_arg('preview', 'true', get_permalink($post_ID))))
-      ,9 => sprintf(__($singular.' scheduled for: <strong>%1$s</strong>. <a target="_blank" href="%2$s">Preview ' . $singular . '</a>'), date_i18n(__('M j, Y @ G:i'), strtotime($post->post_date)), esc_url(get_permalink($post_ID)))
-      ,10 => sprintf(__($singular . ' draft updated. <a target="_blank" href="%s">Preview ' . $singular . '</a>'), esc_url(add_query_arg('preview', 'true', get_permalink($post_ID))))
+      ,8 => __($singular . ' submitted.') . $preview_post_link_html
+      ,9 => sprintf( __($singular.' scheduled for: %s.'), '<strong>' . $scheduled_date . '</strong>') . $scheduled_post_link_html
+      ,10 => __($singular.' draft updated.' ) . $preview_post_link_html
     );
 
     return $messages;
-
   }
 
   /**
@@ -878,7 +904,7 @@ class Piklist_CPT
    */
   public static function wp_insert_post_data($data, $post_array)
   {
-    if (($data['post_status'] != 'auto-draft') && (($data['post_title'] == 'Auto Draft') || empty($data['post_title'])))
+    if (($data['post_status'] != 'auto-draft') && (($data['post_title'] == __('Auto Draft') || empty($data['post_title']))))
     {
       /**
        * piklist_empty_post_title
@@ -1184,9 +1210,10 @@ class Piklist_CPT
   {
     global $pagenow;
 
-    if ($pagenow == 'edit.php')
+		if (in_array($pagenow, array('edit.php', 'upload.php')))
     {
       $object_type = isset($_REQUEST['post_type']) ? esc_attr($_REQUEST['post_type']) : 'post';
+			$object_type = $pagenow == 'upload.php' ? 'attachment' : $object_type;
 
       $taxonomies = get_object_taxonomies($object_type);
 
@@ -1196,23 +1223,9 @@ class Piklist_CPT
         {
           if (isset($taxonomy['configuration']['list_table_filter']) && $taxonomy['configuration']['list_table_filter'] == '1')
           {
-            $tax_obj = get_taxonomy($taxonomy['name']);
-            $tax_name = $tax_obj->labels->name;
-            $tax_slug = $taxonomy['name'];
-
-            $terms = get_terms(array($taxonomy['name']), array('hide_empty' => false));
-
-            if (count($terms) > 0)
-            {
-              echo '<select name="' . $tax_slug . '" id="' . $tax_slug . '" class="postform" style="max-width:90%;">';
-              echo '<option value="">Show All ' . $tax_name . '</option>';
-
-              foreach ($terms as $term)
-              {
-                echo '<option value='. $term->slug, isset($_REQUEST[$tax_slug]) ? $term->slug == esc_attr($_REQUEST[$tax_slug]) ? ' selected="selected"' : '' : '','>' . $term->name .'</option>';
-              }
-              echo '</select>';
-            }
+						piklist::render('shared/list-table-filter-taxonomies', array(
+			      	'taxonomy_name' => $taxonomy['name']
+			      ));
           }
         }
       }
@@ -1269,5 +1282,93 @@ class Piklist_CPT
     }
 
     return $post_type;
+  }
+
+  /**
+   * save_fields
+   * Save any rendered post_meta fields to an option to filter out of the custom fields meta box later.
+   *
+   * @param array $fields The rendered fields for the form.
+   *
+   * @access public
+   * @static
+   * @since 1.0
+   */
+  public static function save_fields($fields)
+  {
+    if (array_key_exists('post_meta', $fields))
+    {
+      $meta_keys = array();
+
+      foreach ($fields['post_meta'] as $post_meta => $field)
+      {
+      	$meta_key = $field['field'];
+
+        if (!strstr($meta_key, ':') && !$field['display'] && $field['type'] != 'group')
+        {
+          array_push($meta_keys, $meta_key);
+        }
+      }
+
+      if (!empty($meta_keys))
+      {
+        $saved_meta_keys = get_option('piklist_post_meta_keys');
+        $saved_meta_keys = $saved_meta_keys ? $saved_meta_keys : array();
+        $saved_meta_keys = array_merge($saved_meta_keys, $meta_keys);
+        $saved_meta_keys = array_unique($saved_meta_keys);
+
+        sort($saved_meta_keys);
+
+        update_option('piklist_post_meta_keys', $saved_meta_keys, true);
+      }
+    }
+  }
+
+  /**
+   * is_protected_meta
+   * Remove fields from the default custom fields meta box
+   *
+   * @param bool $protected Whether the field is protected from the list.
+   * @param string $meta_key The meta key.
+   * @param string $meta_type The meta type.
+   *
+   * @return bool Whether the field is protected from the list.
+   *
+   * @access public
+   * @static
+   * @since 1.0
+   */
+  public static function is_protected_meta($protected, $meta_key, $meta_type)
+  {
+    $saved_meta_keys = get_option('piklist_post_meta_keys', null);
+    if (is_null($saved_meta_keys))
+    {
+      return $protected;
+    }
+
+    return in_array($meta_key, $saved_meta_keys) ? true : $protected;
+  }
+
+  /**
+   * assets_localize
+   * Add data to the local piklist variable
+   *
+   * @return array Current data.
+   *
+   * @access public
+   * @static
+   * @since 1.0
+   */
+  public static function assets_localize($localize)
+  {
+    if (piklist_admin::is_post())
+    {
+      global $post;
+
+      $localize['post'] = $post;
+      $localize['post_statuses'] = self::get_post_statuses_for_type();
+    }
+
+    return $localize;
   }
 }

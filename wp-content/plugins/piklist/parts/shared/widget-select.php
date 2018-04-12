@@ -64,12 +64,10 @@
         
         do_action('piklist_notices');
         
-        foreach ($widgets[$widget]['render'] as $render):
-          if (strstr($render, '-form.php')):
-            piklist::render($render, array(
-              'instance' => $instance
-            ));
-          endif;
+        foreach ($forms[$widget]['render'] as $render):
+          piklist::render($render, array(
+            'instance' => $instance
+          ));
         endforeach;
 
         piklist_form::save_fields();

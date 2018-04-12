@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Add ons
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -46,13 +46,13 @@ class Piklist_Add_On
     require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
     $site_wide_plugins = get_site_option('active_sitewide_plugins');
+
+    $plugins = get_option('active_plugins');
+    $plugins = $plugins ? $plugins : array();
+
     if (!empty($site_wide_plugins))
     {
-      $plugins = array_merge(get_option('active_plugins'), array_keys($site_wide_plugins));
-    }
-    else
-    {
-      $plugins = get_option('active_plugins');
+      $plugins = array_merge($plugins, array_keys($site_wide_plugins));
     }
 
     foreach ($plugins as $plugin)
@@ -62,7 +62,8 @@ class Piklist_Add_On
       if (file_exists($path))
       {
         $data = piklist::get_file_data($path, array(
-                  'type' => 'Plugin Type'
+                   'name' => 'Plugin Name'
+                  ,'type' => 'Plugin Type'
                   ,'version' => 'Version'
                 ));
 
@@ -72,7 +73,7 @@ class Piklist_Add_On
 
           add_action('load-plugins.php', array('piklist_admin', 'deactivation_link'));
 
-          piklist_admin::$piklist_dependent = true;
+          piklist_admin::$piklist_dependent['plugins'][] = $data;
 
           if ($data['version'])
           {
@@ -140,10 +141,21 @@ class Piklist_Add_On
   private static function register_add_on($add_on, $file, $path, $plugin = false)
   {
     if (file_exists($file))
-    {
-      $data = get_plugin_data($file);
+    {      
+      $data = piklist::get_file_data($file, array(
+                'name' => 'Plugin Name'
+                ,'plugin_uri' => 'Plugin URI'
+                ,'version' => 'Version'
+                ,'description' => 'Description'
+                ,'author' => 'Author'
+                ,'author_uri' => 'Author URI'
+                ,'text_domain' => 'Text Domain'
+                ,'domain_path' => 'Domain Path'
+              ));
+              
       $data['plugin'] = $plugin;
-
+      $data['add_on'] = $add_on;
+      
       self::$available_add_ons[$add_on] = $data;
 
       if (self::is_active($add_on))
@@ -156,11 +168,13 @@ class Piklist_Add_On
         {
           call_user_func(array($class_name, '_construct'));
         }
-        
+
+        piklist::$paths[$add_on] = $path . (!$plugin ? '/' . $add_on : '');
         piklist::$add_ons[$add_on]['path'] = $path . (!$plugin ? '/' . $add_on : '');
 
         $path = str_replace(chr(92), '/', str_replace('/add-ons', '', $path));
 
+        piklist::$urls[$add_on] = plugins_url() . substr($path, strrpos($path, '/')) . '/add-ons/' . $add_on;
         piklist::$add_ons[$add_on]['url'] = plugins_url() . substr($path, strrpos($path, '/')) . '/add-ons/' . $add_on;
       }
     }
@@ -205,13 +219,20 @@ class Piklist_Add_On
   public static function current()
   {
     $backtrace = debug_backtrace();
-    
     foreach ($backtrace as $trace)
     {
-      if (strstr($trace['file'], '/parts/'))
+      if (!isset($trace['file'])) 
       {
-        $add_on = substr($trace['file'], 0, strpos($trace['file'], '/parts/'));
-        $add_on = substr($add_on, strrpos($add_on, '/') + 1);
+          continue;
+      }
+      
+      $file = $trace['file'];
+      $parts = DIRECTORY_SEPARATOR . "parts" . DIRECTORY_SEPARATOR;
+      
+      if (strstr($file, $parts))
+      {
+        $add_on = substr($file, 0, strpos($file, $parts));
+        $add_on = substr($add_on, strrpos($add_on, DIRECTORY_SEPARATOR) + 1);
 
         if (isset(piklist::$add_ons[$add_on]))
         {

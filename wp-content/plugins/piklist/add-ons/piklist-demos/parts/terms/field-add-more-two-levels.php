@@ -3,7 +3,7 @@
 Title: Add More Fields: Two Levels
 Order: 1
 Taxonomy: piklist_demo_type
-Tab: Add-More's
+Tab: Add more's
 Sub Tab: Two Levels
 Flow: Demo Workflow
 */
@@ -62,7 +62,7 @@ Flow: Demo Workflow
     'type' => 'group'
     ,'field' => 'module_group'
     ,'label' => __('Page Modules', 'piklist-demo')
-    ,'description' => __('Add-more\'s within a hide/show condition', 'piklist-demo')
+    ,'description' => __('Add more \'s within a hide/show condition', 'piklist-demo')
     ,'value' => 'none'
     ,'add_more' => true
     ,'fields' => array(
@@ -161,7 +161,7 @@ Flow: Demo Workflow
   piklist('field', array(
     'type' => 'group'
     ,'label' => __('Content Section (Grouped)', 'piklist-demo')
-    ,'description' => __('When an add-more field is nested it should be grouped to maintain the data relationships.', 'piklist-demo')
+    ,'description' => __('When an add more field is nested it should be grouped to maintain the data relationships.', 'piklist-demo')
     ,'field' => 'demo_content'
     ,'add_more' => true
     ,'fields' => array(
@@ -212,6 +212,8 @@ Flow: Demo Workflow
     )
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Term Section'

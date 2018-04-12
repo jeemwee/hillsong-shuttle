@@ -24,7 +24,7 @@ global $wp_registered_sidebars;
         <?php foreach ($exclude as $exclude_post_type) : ?>
 
           <?php unset($post_types[$exclude_post_type]); ?>
-       
+
         <?php endforeach; ?>
 
       <?php asort($post_types); ?>
@@ -33,37 +33,41 @@ global $wp_registered_sidebars;
 
       <?php foreach ($post_types as $post_type) : ?>
 
-        <?php $status_count = 0; ?>
+				<?php if($post_type->public == 1) : // Only show public Post Types ?>
 
-        <?php $num_pages = wp_count_posts($post_type->name); ?>
+	        <?php $status_count = 0; ?>
 
-        <?php $statuses = piklist_cpt::get_post_statuses_for_type($post_type->name); ?>
+	        <?php $num_pages = wp_count_posts($post_type->name); ?>
 
-        <?php foreach($statuses as $status => $value) : ?>
+	        <?php $statuses = piklist_cpt::get_post_statuses_for_type($post_type->name); ?>
 
-          <?php if($value->public == 1) : ?>
+	        <?php foreach($statuses as $status => $value) : ?>
 
-            <?php $status_count = $status_count + $num_pages->$status; ?>
+	          <?php if($value->public == 1) : ?>
 
-          <?php endif; ?>
+	            <?php $status_count = $status_count + $num_pages->$status; ?>
 
-        <?php endforeach; ?>
+	          <?php endif; ?>
 
-        <li class="<?php echo mb_strtolower($post_type->name) . __('_right_now', 'piklist');?>">
+	        <?php endforeach; ?>
 
-          <?php if (array_key_exists($post_type->name, $custom_status)) : ?>
+	        <li class="<?php echo piklist::strtolower($post_type->name) . __('_right_now', 'piklist');?>">
 
-            <?php $status = implode($custom_status); ?>
+	          <?php if (array_key_exists($post_type->name, $custom_status)) : ?>
 
-          <?php endif; ?>
+	            <?php $status = implode($custom_status); ?>
 
-          <a href="<?php echo $post_type->name == 'attachment' ? 'upload.php' : 'edit.php?post_type=' . $post_type->name;?>">
+	          <?php endif; ?>
 
-            <?php echo $status_count . '&nbsp;' . ($status_count > 1 ? piklist::pluralize($post_type->label) : $post_type->label); ?>
-          
-          </a>
+	          <a href="<?php echo $post_type->name == 'attachment' ? 'upload.php' : 'edit.php?post_type=' . $post_type->name;?>">
 
-        </li>
+	            <?php echo $status_count . '&nbsp;' . ($status_count > 1 ? piklist::pluralize($post_type->label) : $post_type->label); ?>
+
+	          </a>
+
+	        </li>
+
+				<?php endif; ?>
 
       <?php endforeach; ?>
 
@@ -77,19 +81,19 @@ global $wp_registered_sidebars;
 
         <?php foreach ($taxonomies as $taxonomy) : ?>
 
-          <li class="<?php echo mb_strtolower($post_type->name); ?>">
+          <li class="<?php echo piklist::strtolower($post_type->name); ?>">
 
             <?php $num_pages = wp_count_terms($taxonomy->name); ?>
 
             <a href="edit-tags.php?taxonomy=<?php echo $taxonomy->name; ?>">
-              
+
               <?php echo number_format_i18n( $num_pages) . '&nbsp;' . $taxonomy->label; ?>
-            
+
             </a>
 
           </li>
 
-        <?php endforeach; ?> 
+        <?php endforeach; ?>
 
     </ul>
 
@@ -140,7 +144,7 @@ global $wp_registered_sidebars;
       <?php $users = count_users(); ?>
 
       <?php echo $users['total_users'] . '&nbsp;' . __('User(s)','piklist'); ?>
-    
+
     </h4>
 
     <ul>
@@ -150,14 +154,14 @@ global $wp_registered_sidebars;
           <li class="<?php echo $role; ?>">
 
             <a href="users.php?role=<?php echo $role; ?>">
-              
+
               <?php echo $count . '&nbsp;' . ucfirst($count > 1 ? piklist::pluralize($role) : $role); ?>
-            
+
             </a>
 
           </li>
 
-        <?php endforeach; ?> 
+        <?php endforeach; ?>
 
     </ul>
 
@@ -174,7 +178,7 @@ global $wp_registered_sidebars;
     <?php if (current_user_can('switch_themes')) : ?>
 
       <?php $theme_name = sprintf('<a href="themes.php">%1$s</a>', $theme->display('Name')); ?>
-  
+
     <?php else : ?>
 
       <?php $theme_name = $theme->display('Name'); ?>
@@ -225,11 +229,11 @@ global $wp_registered_sidebars;
     <?php if (!empty($actions)) : ?>
 
       <div class="sub">
-    
+
         <?php echo $actions; ?>
-  
+
       </div>
-  
+
     <?php endif;?>
 
   </div>

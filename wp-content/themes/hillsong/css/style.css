@@ -12,6 +12,8 @@ Tags: blog, custom-menu, featured-images, threaded-comments, translation-ready, 
 */
 /* Font size h1 */
 /* Font size h2 */
+/* Font size h3 */
+/* Font size h3 */
 /* Font Weights */
 .navbar {
   position: fixed;
@@ -58,11 +60,11 @@ Tags: blog, custom-menu, featured-images, threaded-comments, translation-ready, 
   height: 100vh;
   display: block;
   width: 100vw;
-  position: absolute;
   left: 0px;
   top: 0px;
   background-position: center;
-  background-size: cover; }
+  background-size: cover;
+  background-attachment: fixed; }
   .hero:before {
     content: '';
     background: rgba(0, 0, 0, 0.65);
@@ -74,7 +76,7 @@ Tags: blog, custom-menu, featured-images, threaded-comments, translation-ready, 
     transform: translateY(-50%);
     width: 100%;
     text-align: center; }
-    .hero .content h1, .hero .content h2 {
+    .hero .content h1, .hero .content h3 {
       color: #fff; }
   .hero .shuttle-status {
     position: absolute;
@@ -84,10 +86,12 @@ Tags: blog, custom-menu, featured-images, threaded-comments, translation-ready, 
     text-align: center;
     background: rgba(255, 255, 255, 0.5);
     color: #000;
-    padding: 15px 0px; }
+    padding: 15px 0px;
+    z-index: 2; }
     .hero .shuttle-status.red {
       background: red;
-      color: #fff; }
+      color: #fff;
+      z-index: 1; }
       .hero .shuttle-status.red a {
         color: #fff;
         text-decoration: underline; }
@@ -101,8 +105,58 @@ h1 {
   font-weight: 700; }
 
 h2 {
+  font-size: 45px;
+  line-height: 45px;
+  font-weight: 700;
+  text-align: center; }
+
+h3 {
   font-size: 35px;
   line-height: 35px;
   font-weight: 300; }
+
+h4 {
+  font-size: 26px;
+  line-height: 26px;
+  font-weight: 300;
+  text-align: center; }
+
+.btn {
+  border: 2px solid #24a5d3;
+  padding: 5px 15px;
+  border-radius: 50px;
+  color: #24a5d3; }
+  .btn:hover {
+    color: #aa9055;
+    border: 2px solid #aa9055; }
+
+#get_your_ride {
+  background: #E6E6E6;
+  min-height: 100vh;
+  width: 100vw;
+  left: -15px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  flex-direction: column; }
+  #get_your_ride .content .thumbnail {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    display: block;
+    margin-top: 50px; }
+  #get_your_ride .content .item {
+    text-align: center; }
+    #get_your_ride .content .item .subtitle {
+      font-weight: 700;
+      margin-top: 40px;
+      margin-bottom: 15px;
+      display: block; }
+
+body {
+  overflow-x: hidden; }
+
+.round {
+  border-radius: 50%; }
 
 /*# sourceMappingURL=style.css.map */

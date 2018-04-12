@@ -1,0 +1,29 @@
+#get_your_ride {
+  background: $gray-base;
+  min-height: 100vh;
+  width: 100vw;
+  left: -#{$grid-gutter-width /2};
+  position: relative;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  .content {
+
+    .thumbnail {
+      width: 150px;
+      height: 150px;
+      margin: 0 auto;
+      display: block;
+      margin-top: 50px;
+    }
+    .item {
+      text-align: center;
+      .subtitle {
+        font-weight: $font-weight-bold;
+        margin-top: 40px;
+        margin-bottom: 15px;
+        display: block;
+      }
+    }
+  }
+}

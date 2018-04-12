@@ -10,6 +10,23 @@
     )
     ,'required' => true
   ));
+  
+  piklist('field', array(
+    'type' => 'select'
+    ,'field' => 'validate_select_required'
+    ,'label' => __('Custom Required Message', 'piklist-demo')
+    ,'description' => "required => custom message"
+    ,'choices' => array(
+      '1' => 'Choice #1'
+      ,'2' => 'Choice #2'
+      ,'3' => 'Choice #3'
+    )
+    ,'attributes' => array(
+      'class' => 'large-text'
+      ,'multiple' => true
+    )
+    ,'required' => 'must have at least one option selected'
+  ));
 
   piklist('field', array(
     'type'    => 'group'
@@ -154,7 +171,7 @@
     'type' => 'group'
     ,'field' => 'address_group_add_more'
     ,'add_more' => true
-    ,'label' => __('Grouped/Add-More with Limit', 'piklist-demo')
+    ,'label' => __('Grouped/Add more with Limit', 'piklist-demo')
     ,'description' => __('No more than 2', 'piklist-demo')
     ,'fields' => array(
       array(
@@ -181,6 +198,8 @@
     )
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Widget'

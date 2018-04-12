@@ -111,7 +111,7 @@
   piklist('field', array(
     'type' => 'group'
     ,'label' => __('Content Section', 'piklist-demo')
-    ,'description' => __('When an add-more field is nested it should be grouped to maintain the data relationships.', 'piklist-demo')
+    ,'description' => __('When an add more field is nested it should be grouped to maintain the data relationships.', 'piklist-demo')
     ,'field' => 'demo_content'
     ,'add_more' => true
     ,'fields' => array(
@@ -311,6 +311,8 @@
     )
   ));
 
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Widget'

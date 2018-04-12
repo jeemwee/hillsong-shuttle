@@ -69,8 +69,8 @@ Flow: Demo Workflow
     'type' => 'group'
     ,'field' => 'address_group_add_more'
     ,'add_more' => true
-    ,'label' => __('Address (Grouped/Add-More)', 'piklist-demo')
-    ,'description' => __('A grouped field using Add-More.', 'piklist-demo')
+    ,'label' => __('Address (Grouped/Add more)', 'piklist-demo')
+    ,'description' => __('A grouped field using add more.', 'piklist-demo')
     ,'fields' => array(
       array(
         'type' => 'text'
@@ -114,7 +114,7 @@ Flow: Demo Workflow
     piklist('field', array(
       'type' => 'html'
       ,'label' => __('Address Output', 'piklist-demo')
-      ,'description' => __('This is the output of the grouped add-more field.', 'piklist-demo')
+      ,'description' => __('This is the output of the grouped add more field.', 'piklist-demo')
       ,'value' => piklist('shared/address-table', array('data' => $meta['address_group_add_more'], 'loop' => 'data', 'return' => true))
     ));
     
@@ -164,7 +164,7 @@ Flow: Demo Workflow
 
    piklist('field', array(
     'type' => 'group'
-    ,'label' => __('Address (Un-Grouped/Add-More)', 'piklist-demo')
+    ,'label' => __('Address (Un-Grouped/Add more)', 'piklist-demo')
     ,'add_more' => true
     ,'description' => __('An Un-grouped field. Data is saved as individual meta and is searchable.', 'piklist-demo')
     ,'fields' => array(
@@ -210,12 +210,14 @@ Flow: Demo Workflow
     piklist('field', array(
       'type' => 'html'
       ,'label' => __('Address Output', 'piklist-demo')
-      ,'description' => __('This is the output of the Un-grouped add-more field.', 'piklist-demo')
+      ,'description' => __('This is the output of the Un-grouped add more field.', 'piklist-demo')
       ,'value' => piklist('shared/address-table-ungrouped', array('data' => $meta, 'loop' => 'data', 'return' => true))
     ));
     
   endif; 
   
+  // Show the path to this file in the Demos
+  // DO NOT use this in your own code
   piklist('shared/code-locater', array(
     'location' => __FILE__
     ,'type' => 'Meta Box'

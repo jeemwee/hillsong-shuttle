@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) exit; // Exit if accessed directly
  *
  * @package     Piklist
  * @subpackage  Pointer
- * @copyright   Copyright (c) 2012-2015, Piklist, LLC.
+ * @copyright   Copyright (c) 2012-2016, Piklist, LLC.
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
  * @since       1.0
  */
@@ -74,8 +74,10 @@ class Piklist_Pointer
               ,'anchor_id' => 'Anchor ID'
               ,'edge' => 'Edge'
               ,'align' => 'Align'
+              ,'id' => 'ID'
+              ,'slug' => 'Slug'
             );
-            
+
     piklist::process_parts('pointers', $data, array('piklist_pointer', 'register_pointer_callback'));
   }
 
@@ -93,7 +95,7 @@ class Piklist_Pointer
   {
     extract($arguments);
     
-    $content =  '<h3>' . $data['title'] . '</h3>';
+    $content =  '<h3 id="' . $id . '">' . $data['title'] . '</h3>';
     $dismissed = get_user_meta(get_current_user_id(), 'dismissed_wp_pointers', true);
     $dismissed = explode(',', $dismissed);
     

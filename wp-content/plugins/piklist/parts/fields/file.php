@@ -1,15 +1,15 @@
 <?php
   $options = array_merge(
-              array(
-                'button' =>'Add Media'
-                ,'modal_title' =>'Add Media'
-                ,'basic' => false
-                ,'preview_size' => 'thumbnail'
-                ,'textarea_rows' => 5
-                ,'save' => 'id'
-              )
-              ,isset($options) && is_array($options) ? $options : array()
-            );
+    array(
+      'button' =>'Add Media'
+      ,'modal_title' =>'Add Media'
+      ,'basic' => false
+      ,'preview_size' => 'piklist_file_preview'
+      ,'textarea_rows' => 5
+      ,'save' => 'id'
+    )
+    ,isset($options) && is_array($options) ? $options : array()
+  );
 ?>
 
 <div class="piklist-field-part">
@@ -46,13 +46,20 @@
       {
         if (is_numeric($attachment))
         {
-          $attachment_id = (int) $attachment;
+          $attachment_id = absint($attachment);
+          $type = get_post_mime_type($attachment_id);
 
-          array_push($attachments, array(
-            'id' => $attachment_id
-            ,'type' => get_post_mime_type($attachment_id)
-            ,'data' => wp_get_attachment_image_src($attachment_id, $options['preview_size'], false)
-          ));
+          if (false !== $type)
+          {
+            $check = piklist_media::image_has_size($attachment_id, $options['preview_size']);
+            array_push($attachments, array(
+              'id' => $attachment_id
+              ,'type' => $type
+              ,'data' => piklist_media::image_has_size($attachment_id, $options['preview_size'])
+                  ? wp_get_attachment_image_src($attachment_id, $options['preview_size'], false)
+                  : wp_get_attachment_image_src($attachment_id, 'thumbnail', false)
+            ));
+          }
         }
         else
         {
@@ -64,7 +71,9 @@
           }
           else
           {
-            $image_sizes = piklist_media::get_image_sizes($options['preview_size']);
+            $image_sizes = piklist_media::image_has_size($attachment_id, $options['preview_size'])
+              ? piklist_media::get_image_sizes($options['preview_size'])
+              : piklist_media::get_image_sizes('thumbnail');
             $image_data[0] = $image_sizes['width'];
             $image_data[1] = $image_sizes['height'];
 
@@ -126,7 +135,7 @@
 
             if ($attachment['type']):
               if (in_array($attachment['type'], array('image/jpeg', 'image/png', 'image/gif'))):
-                $image = !is_int($attachment['id']) ? $attachment['data'] : wp_get_attachment_image_src($attachment['id'], $options['preview_size'], false);
+                $image = $attachment['data'];
       ?>
 
                 <li class="attachment selected" <?php echo $image[1] ? 'style="width: ' . $image[1] . 'px;"' : null; ?>>
@@ -134,11 +143,15 @@
                      <div class="thumbnail">
                        <div class="centered">
                          <a href="#">
-                           <img src="<?php echo esc_attr($image[0]); ?>" width="<?php echo esc_attr($attachment['data'][1]);?>" />
+                           <img src="<?php echo esc_attr($image[0]); ?>" width="<?php echo esc_attr($image[1]);?>" />
                          </a>
                        </div>
                      </div>
-                     <button type="button" class="button-link check" data-attachment-save="<?php echo $options['save']; ?>" data-attachment-id="<?php echo $attachment['id']; ?>" data-attachment-url="<?php echo esc_attr($image[0]); ?>" data-attachments="<?php echo piklist_form::get_field_name($arguments); ?>"><span class="media-modal-icon"></span><span class="screen-reader-text"><?php _e('Deselect'); ?></span></button>
+                     <?php if (version_compare($wp_version, '4.3', '<')): ?>
+                       <a class="check" href="#" title="Deselect" tabindex="0" data-attachment-save="<?php echo $options['save']; ?>" data-attachment-id="<?php echo $attachment['id']; ?>" data-attachment-url="<?php echo esc_attr($image[0]); ?>" data-attachments="<?php echo piklist_form::get_field_name($arguments); ?>"><div class="media-modal-icon"></div></a>
+                     <?php else: ?>
+                       <button type="button" class="button-link check" data-attachment-save="<?php echo $options['save']; ?>" data-attachment-id="<?php echo $attachment['id']; ?>" data-attachment-url="<?php echo esc_attr($image[0]); ?>" data-attachments="<?php echo piklist_form::get_field_name($arguments); ?>"><span class="media-modal-icon"></span><span class="screen-reader-text"><?php _e('Deselect'); ?></span></button>
+                     <?php endif; ?>
                    </div>
                  </li>
 
@@ -161,7 +174,11 @@
                          <div><?php echo basename($attachment_path); ?></div>
                        </div>
                      </div>
-                     <button type="button" class="button-link check" data-attachment-save="<?php echo $options['save']; ?>" data-attachment-id="<?php echo $attachment['id']; ?>" data-attachments="<?php echo piklist_form::get_field_name($arguments); ?>"><span class="media-modal-icon"></span><span class="screen-reader-text"><?php _e('Deselect'); ?></span></button>
+                     <?php if (version_compare($wp_version, '4.3', '<')): ?>
+                       <a class="check" href="#" title="Deselect" tabindex="0" data-attachment-save="<?php echo $options['save']; ?>" data-attachment-id="<?php echo $attachment['id']; ?>" data-attachments="<?php echo piklist_form::get_field_name($arguments); ?>"><div class="media-modal-icon"></div></a>
+                     <?php else: ?>
+                       <button type="button" class="button-link check" data-attachment-save="<?php echo $options['save']; ?>" data-attachment-id="<?php echo $attachment['id']; ?>" data-attachments="<?php echo piklist_form::get_field_name($arguments); ?>"><span class="media-modal-icon"></span><span class="screen-reader-text"><?php _e('Deselect'); ?></span></button>
+                     <?php endif; ?>
                    </div>
                  </li>
 
