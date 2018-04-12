@@ -1,0 +1,27 @@
+{
+  "name": "wp-detoekomst",
+    "config": {
+        "vendor-dir": "vendors/"
+    },
+  "repositories": [
+
+    {
+      "type":"composer",
+      "url":"https://wpackagist.org"
+    }
+    ],
+    "require": {
+      "php": ">=5.3.0",
+  		"wpackagist-plugin/wordpress-seo": "7.2",
+  		"wpackagist-plugin/piklist": "0.9.9.13",
+  		"wpackagist-plugin/disable-comments": "1.7.1",
+          "wpackagist-plugin/regenerate-thumbnails": "3.0.2",
+  		"wpackagist-plugin/post-types-order": "1.9.3.6"
+    },
+    "extra": {
+      "installer-paths" : {
+           "wp-content/plugins/{$name}/" : ["type:wordpress-plugin"],
+           "wp-content/themes/{$name}/" : ["type:wordpress-theme"]
+      }
+  	}
+  }
